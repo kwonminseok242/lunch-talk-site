@@ -176,14 +176,34 @@ def save_questions(questions):
     if USE_GSHEETS and conn_gsheet and questions:
         try:
             df = pd.DataFrame(questions)
-            columns = ['id', 'name', 'question', 'timestamp', 'likes']
-            df = df[columns] if all(col in df.columns for col in columns) else df
+            # 필요한 컬럼만 선택
+            required_columns = ['id', 'name', 'question', 'timestamp', 'likes']
+            
+            # 컬럼이 없는 경우 추가
+            for col in required_columns:
+                if col not in df.columns:
+                    df[col] = ''
+            
+            # 컬럼 순서 정렬
+            df = df[required_columns]
+            
+            # 빈 값 처리
+            df = df.fillna('')
+            
+            # Google Sheets에 저장
             conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
             st.cache_data.clear()
             # Google Sheets 저장 성공 시 SQLite에도 백업
             save_to_sqlite(questions)
             return
-        except Exception:
+        except Exception as e:
+            # 에러 메시지 표시 (디버깅용)
+            import traceback
+            error_msg = f"Google Sheets 저장 오류: {str(e)}\n{traceback.format_exc()}"
+            # 관리자 페이지에서만 에러 표시
+            if 'admin_authenticated' in st.session_state and st.session_state.get('admin_authenticated', False):
+                st.error(error_msg)
+            # 실패 시 SQLite로 대체 저장
             pass
     
     # 2. SQLite 저장 (영구 저장)
@@ -431,7 +451,7 @@ st.markdown("""
             margin-bottom: 1rem;">
     <h1 style="margin-bottom: 0.5rem;">💬 현직자 런치톡 질문 수집</h1>
     <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin: 0;">
-        [질문 취합] 현직자 문의 사항을 남겨주세요. ※ 원활한 진행을 위해 실명 질문을 우선 채택하며, 시간 제한으로 인해 모든 질문이 전달되지 않을 수 있습니다.
+        [질문 취합] 현직자 문의 사항을 남겨주세요. ※ 실명 질문을 우선 채택하겠습니다., 시간 제한으로 인해 모든 질문이 전달되지 않을 수 있습니다.
     </p>
 </div>
 """, unsafe_allow_html=True)

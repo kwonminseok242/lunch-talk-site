@@ -152,13 +152,32 @@ def save_questions(questions):
     if USE_GSHEETS and conn_gsheet and questions:
         try:
             df = pd.DataFrame(questions)
-            columns = ['id', 'name', 'question', 'timestamp', 'likes']
-            df = df[columns] if all(col in df.columns for col in columns) else df
+            # 필요한 컬럼만 선택
+            required_columns = ['id', 'name', 'question', 'timestamp', 'likes']
+            
+            # 컬럼이 없는 경우 추가
+            for col in required_columns:
+                if col not in df.columns:
+                    df[col] = ''
+            
+            # 컬럼 순서 정렬
+            df = df[required_columns]
+            
+            # 빈 값 처리
+            df = df.fillna('')
+            
+            # Google Sheets에 저장
             conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
             st.cache_data.clear()
             save_to_sqlite(questions)
             return
-        except:
+        except Exception as e:
+            # 에러 메시지 표시
+            import traceback
+            error_msg = f"Google Sheets 저장 오류: {str(e)}"
+            st.error(error_msg)
+            st.error(f"상세: {traceback.format_exc()}")
+            # 실패 시 SQLite로 대체 저장
             pass
     
     # 2. SQLite 저장 (영구 저장)
@@ -883,6 +902,45 @@ if check_admin():
         questions_count = len(load_questions())
         st.markdown("---")
         st.metric("현재 저장된 질문 수", f"{questions_count}개")
+        
+        # Google Sheets 연결 테스트
+        st.markdown("---")
+        st.subheader("🔧 Google Sheets 연결 테스트")
+        
+        if USE_GSHEETS and conn_gsheet:
+            if st.button("연결 테스트", key="test_gsheets"):
+                try:
+                    # 읽기 테스트
+                    df_read = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+                    st.success(f"✅ 읽기 성공: {len(df_read) if df_read is not None and not df_read.empty else 0}개 행")
+                    
+                    # 쓰기 테스트 (테스트 데이터)
+                    test_data = pd.DataFrame([{
+                        'id': 999,
+                        'name': '테스트',
+                        'question': '연결 테스트',
+                        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        'likes': 0
+                    }])
+                    
+                    # 기존 데이터와 합치기
+                    if df_read is not None and not df_read.empty:
+                        # 테스트 데이터 제거 (이미 있으면)
+                        df_read = df_read[df_read['id'] != 999]
+                        combined_df = pd.concat([df_read, test_data], ignore_index=True)
+                    else:
+                        combined_df = test_data
+                    
+                    conn_gsheet.update(worksheet=WORKSHEET_NAME, data=combined_df)
+                    st.success("✅ 쓰기 성공: 테스트 데이터가 저장되었습니다")
+                    st.info("💡 Google Sheets를 새로고침하여 확인하세요. 테스트 데이터는 나중에 삭제하세요.")
+                except Exception as e:
+                    import traceback
+                    st.error(f"❌ 연결 실패: {str(e)}")
+                    with st.expander("상세 에러 정보"):
+                        st.code(traceback.format_exc())
+        else:
+            st.warning("⚠️ Google Sheets 연결이 설정되지 않았습니다")
         
         st.markdown("---")
         
