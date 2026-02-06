@@ -1024,11 +1024,47 @@ worksheet = "questions"
             st.error(f"Secrets 확인 오류: {e}")
         
         if USE_GSHEETS and conn_gsheet:
+            # Secrets에서 읽은 URL 확인
+            try:
+                gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+                current_url = gsheets_config.get("spreadsheet", "")
+                st.info(f"📋 현재 Secrets URL: `{current_url}`")
+                
+                # CSV export URL 형식으로 변환
+                if current_url:
+                    # spreadsheet_id 추출
+                    import re
+                    match = re.search(r'/spreadsheets/d/([a-zA-Z0-9-_]+)', current_url)
+                    if match:
+                        spreadsheet_id = match.group(1)
+                        csv_export_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid=0"
+                        st.info(f"📥 CSV Export URL: `{csv_export_url}`")
+                        
+                        # CSV export URL 직접 테스트
+                        try:
+                            import urllib.request
+                            with urllib.request.urlopen(csv_export_url) as response:
+                                csv_data = response.read().decode('utf-8')
+                                st.success(f"✅ CSV Export URL 접근 성공! (데이터 길이: {len(csv_data)} bytes)")
+                        except Exception as e:
+                            st.error(f"❌ CSV Export URL 접근 실패: {e}")
+                            st.warning("⚠️ 공개 설정이 제대로 되지 않았거나, CSV export가 비활성화되어 있을 수 있습니다.")
+            except Exception as e:
+                st.warning(f"URL 확인 중 오류: {e}")
+            
             if st.button("연결 테스트", key="test_gsheets"):
                 try:
-                    # 읽기 테스트 - Secrets에서 자동으로 spreadsheet를 읽도록 함
-                    # spreadsheet 파라미터를 명시적으로 전달하지 않으면 Secrets의 설정을 사용
-                    df_read = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+                    # Secrets에서 spreadsheet URL 가져오기
+                    gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+                    spreadsheet_url = gsheets_config.get("spreadsheet", "")
+                    
+                    if spreadsheet_url:
+                        # spreadsheet 파라미터를 명시적으로 전달
+                        df_read = conn_gsheet.read(spreadsheet=spreadsheet_url, worksheet=WORKSHEET_NAME, ttl=0)
+                    else:
+                        # Secrets에서 자동으로 읽기
+                        df_read = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+                    
                     st.success(f"✅ 읽기 성공: {len(df_read) if df_read is not None and not df_read.empty else 0}개 행")
                     
                     # 쓰기 테스트 (테스트 데이터)
@@ -1048,8 +1084,16 @@ worksheet = "questions"
                     else:
                         combined_df = test_data
                     
-                    # Secrets에서 자동으로 spreadsheet를 읽도록 함
-                    conn_gsheet.update(worksheet=WORKSHEET_NAME, data=combined_df)
+                    # Secrets에서 spreadsheet URL 가져오기
+                    gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+                    spreadsheet_url = gsheets_config.get("spreadsheet", "")
+                    
+                    if spreadsheet_url:
+                        # spreadsheet 파라미터를 명시적으로 전달
+                        conn_gsheet.update(spreadsheet=spreadsheet_url, worksheet=WORKSHEET_NAME, data=combined_df)
+                    else:
+                        # Secrets에서 자동으로 읽기
+                        conn_gsheet.update(worksheet=WORKSHEET_NAME, data=combined_df)
                     st.success("✅ 쓰기 성공: 테스트 데이터가 저장되었습니다")
                     st.info("💡 Google Sheets를 새로고침하여 확인하세요. 테스트 데이터는 나중에 삭제하세요.")
                 except Exception as e:
