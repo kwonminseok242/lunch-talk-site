@@ -58,13 +58,39 @@ WORKSHEET_NAME = "questions"
 
 # Google Sheets 연결 (설정되어 있으면 사용)
 conn_gsheet = None
+SPREADSHEET_URL = None
 if USE_GSHEETS:
     try:
-        conn_gsheet = st.connection("gsheets", type=GSheetsConnection)
-        USE_GSHEETS = True
+        # Secrets에서 spreadsheet 설정 확인
+        try:
+            gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+            
+            # spreadsheet URL이 직접 있는 경우
+            if "spreadsheet" in gsheets_config:
+                SPREADSHEET_URL = gsheets_config["spreadsheet"]
+            # spreadsheet_id가 있는 경우 URL로 변환
+            elif "spreadsheet_id" in gsheets_config:
+                spreadsheet_id = gsheets_config["spreadsheet_id"]
+                SPREADSHEET_URL = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
+            # spreadsheet_url이 있는 경우
+            elif "spreadsheet_url" in gsheets_config:
+                SPREADSHEET_URL = gsheets_config["spreadsheet_url"]
+            
+            if SPREADSHEET_URL:
+                conn_gsheet = st.connection("gsheets", type=GSheetsConnection)
+                USE_GSHEETS = True
+            else:
+                USE_GSHEETS = False
+                conn_gsheet = None
+        except Exception as e:
+            # Secrets가 없거나 형식이 다를 경우
+            USE_GSHEETS = False
+            conn_gsheet = None
+            SPREADSHEET_URL = None
     except Exception:
         USE_GSHEETS = False
         conn_gsheet = None
+        SPREADSHEET_URL = None
 
 def init_db():
     """SQLite 데이터베이스 초기화"""
@@ -85,9 +111,9 @@ def init_db():
 def load_questions():
     """질문 데이터 로드 - Google Sheets 우선, 없으면 SQLite, 마지막으로 JSON"""
     # 1. Google Sheets 우선
-    if USE_GSHEETS and conn_gsheet:
+    if USE_GSHEETS and conn_gsheet and SPREADSHEET_URL:
         try:
-            df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+            df = conn_gsheet.read(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, ttl=0)
             if df is not None and not df.empty:
                 questions = df.to_dict('records')
                 result = []
@@ -191,7 +217,10 @@ def save_questions(questions):
             df = df.fillna('')
             
             # Google Sheets에 저장
-            conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
+            if SPREADSHEET_URL:
+                conn_gsheet.update(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, data=df)
+            else:
+                conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
             st.cache_data.clear()
             # Google Sheets 저장 성공 시 SQLite에도 백업
             save_to_sqlite(questions)

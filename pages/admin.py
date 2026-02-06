@@ -79,20 +79,45 @@ def save_to_sqlite(questions):
 
 # Google Sheets 연결
 conn_gsheet = None
+SPREADSHEET_URL = None
 if USE_GSHEETS:
     try:
-        conn_gsheet = st.connection("gsheets", type=GSheetsConnection)
-        USE_GSHEETS = True
-    except:
+        # Secrets에서 spreadsheet 설정 확인
+        try:
+            gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+            
+            # spreadsheet URL이 직접 있는 경우
+            if "spreadsheet" in gsheets_config:
+                SPREADSHEET_URL = gsheets_config["spreadsheet"]
+            # spreadsheet_id가 있는 경우 URL로 변환
+            elif "spreadsheet_id" in gsheets_config:
+                spreadsheet_id = gsheets_config["spreadsheet_id"]
+                SPREADSHEET_URL = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
+            # spreadsheet_url이 있는 경우
+            elif "spreadsheet_url" in gsheets_config:
+                SPREADSHEET_URL = gsheets_config["spreadsheet_url"]
+            
+            if SPREADSHEET_URL:
+                conn_gsheet = st.connection("gsheets", type=GSheetsConnection)
+                USE_GSHEETS = True
+            else:
+                USE_GSHEETS = False
+                conn_gsheet = None
+        except Exception as e:
+            USE_GSHEETS = False
+            conn_gsheet = None
+            SPREADSHEET_URL = None
+    except Exception:
         USE_GSHEETS = False
         conn_gsheet = None
+        SPREADSHEET_URL = None
 
 def load_questions():
     """질문 데이터 로드 - Google Sheets 우선, 없으면 SQLite, 마지막으로 JSON"""
     # 1. Google Sheets 우선
-    if USE_GSHEETS and conn_gsheet:
+    if USE_GSHEETS and conn_gsheet and SPREADSHEET_URL:
         try:
-            df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+            df = conn_gsheet.read(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, ttl=0)
             if df is not None and not df.empty:
                 questions = df.to_dict('records')
                 result = []
@@ -167,7 +192,10 @@ def save_questions(questions):
             df = df.fillna('')
             
             # Google Sheets에 저장
-            conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
+            if SPREADSHEET_URL:
+                conn_gsheet.update(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, data=df)
+            else:
+                conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
             st.cache_data.clear()
             save_to_sqlite(questions)
             return
@@ -903,15 +931,49 @@ if check_admin():
         st.markdown("---")
         st.metric("현재 저장된 질문 수", f"{questions_count}개")
         
-        # Google Sheets 연결 테스트
+        # Google Sheets 연결 테스트 및 디버깅
         st.markdown("---")
         st.subheader("🔧 Google Sheets 연결 테스트")
+        
+        # Secrets 확인
+        try:
+            gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+            st.info(f"📋 Secrets 확인:")
+            st.json(gsheets_config)
+            
+            # 여러 형식 지원
+            spreadsheet_id = gsheets_config.get("spreadsheet_id", "")
+            spreadsheet_url = gsheets_config.get("spreadsheet", gsheets_config.get("spreadsheet_url", ""))
+            worksheet_name = gsheets_config.get("worksheet", WORKSHEET_NAME)
+            
+            if SPREADSHEET_URL:
+                st.success(f"✅ 스프레드시트 URL: `{SPREADSHEET_URL}`")
+            elif spreadsheet_id:
+                st.success(f"✅ 스프레드시트 ID: `{spreadsheet_id}`")
+            else:
+                st.error("❌ `spreadsheet` 또는 `spreadsheet_id`가 Secrets에 없습니다!")
+                st.info("💡 Secrets에 다음 중 하나를 추가하세요:")
+                st.code("""
+[connections.gsheets]
+spreadsheet = "https://docs.google.com/spreadsheets/d/1lEauHDkNImWHV-TpGbqGoBxYpC8dE0MY3SMMBBo1z0k/edit"
+# 또는
+spreadsheet_id = "1lEauHDkNImWHV-TpGbqGoBxYpC8dE0MY3SMMBBo1z0k"
+worksheet = "questions"
+                """)
+            
+            if worksheet_name:
+                st.info(f"📄 워크시트 이름: `{worksheet_name}`")
+        except Exception as e:
+            st.error(f"Secrets 확인 오류: {e}")
         
         if USE_GSHEETS and conn_gsheet:
             if st.button("연결 테스트", key="test_gsheets"):
                 try:
                     # 읽기 테스트
-                    df_read = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+                    if SPREADSHEET_URL:
+                        df_read = conn_gsheet.read(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, ttl=0)
+                    else:
+                        df_read = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
                     st.success(f"✅ 읽기 성공: {len(df_read) if df_read is not None and not df_read.empty else 0}개 행")
                     
                     # 쓰기 테스트 (테스트 데이터)
@@ -931,7 +993,10 @@ if check_admin():
                     else:
                         combined_df = test_data
                     
-                    conn_gsheet.update(worksheet=WORKSHEET_NAME, data=combined_df)
+                    if SPREADSHEET_URL:
+                        conn_gsheet.update(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, data=combined_df)
+                    else:
+                        conn_gsheet.update(worksheet=WORKSHEET_NAME, data=combined_df)
                     st.success("✅ 쓰기 성공: 테스트 데이터가 저장되었습니다")
                     st.info("💡 Google Sheets를 새로고침하여 확인하세요. 테스트 데이터는 나중에 삭제하세요.")
                 except Exception as e:
