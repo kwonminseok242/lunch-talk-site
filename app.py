@@ -117,29 +117,35 @@ def init_db():
     conn.commit()
     conn.close()
 
+def has_service_account(gsheets_config: dict) -> bool:
+    """Service Account 인증 설정 여부 확인"""
+    required_keys = ["client_email", "private_key", "project_id"]
+    return all(gsheets_config.get(key) for key in required_keys)
+
 def load_questions():
     """질문 데이터 로드 - Google Sheets 우선, 없으면 SQLite, 마지막으로 JSON"""
     # 1. Google Sheets 우선
     if USE_GSHEETS and conn_gsheet:
         try:
-            # CSV export URL을 직접 사용하여 읽기 (st-gsheets-connection의 변환 문제 우회)
             gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
             spreadsheet_url = gsheets_config.get("spreadsheet", "")
-            
-            if spreadsheet_url:
-                # spreadsheet_id 추출
-                import re
-                match = re.search(r'/spreadsheets/d/([a-zA-Z0-9-_]+)', spreadsheet_url)
-                if match:
-                    spreadsheet_id = match.group(1)
-                    # CSV export URL 직접 사용
-                    csv_export_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid=0"
-                    df = pd.read_csv(csv_export_url)
-                else:
-                    # 기존 방식 시도
-                    df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
-            else:
+
+            if has_service_account(gsheets_config):
+                # Service Account 인증이 있으면 정식 API 사용
                 df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+            else:
+                # 인증이 없으면 CSV export URL로 읽기
+                if spreadsheet_url:
+                    import re
+                    match = re.search(r'/spreadsheets/d/([a-zA-Z0-9-_]+)', spreadsheet_url)
+                    if match:
+                        spreadsheet_id = match.group(1)
+                        csv_export_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid=0"
+                        df = pd.read_csv(csv_export_url)
+                    else:
+                        df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+                else:
+                    df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
             
             if df is not None and not df.empty:
                 questions = df.to_dict('records')
