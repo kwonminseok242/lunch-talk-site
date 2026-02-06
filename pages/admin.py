@@ -124,9 +124,27 @@ if USE_GSHEETS:
 def load_questions():
     """질문 데이터 로드 - Google Sheets 우선, 없으면 SQLite, 마지막으로 JSON"""
     # 1. Google Sheets 우선
-    if USE_GSHEETS and conn_gsheet and SPREADSHEET_URL:
+    if USE_GSHEETS and conn_gsheet:
         try:
-            df = conn_gsheet.read(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, ttl=0)
+            # CSV export URL을 직접 사용하여 읽기 (st-gsheets-connection의 변환 문제 우회)
+            gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+            spreadsheet_url = gsheets_config.get("spreadsheet", "")
+            
+            if spreadsheet_url:
+                # spreadsheet_id 추출
+                import re
+                match = re.search(r'/spreadsheets/d/([a-zA-Z0-9-_]+)', spreadsheet_url)
+                if match:
+                    spreadsheet_id = match.group(1)
+                    # CSV export URL 직접 사용
+                    csv_export_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid=0"
+                    df = pd.read_csv(csv_export_url)
+                else:
+                    # 기존 방식 시도
+                    df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+            else:
+                df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+            
             if df is not None and not df.empty:
                 questions = df.to_dict('records')
                 result = []
@@ -1054,18 +1072,26 @@ worksheet = "questions"
             
             if st.button("연결 테스트", key="test_gsheets"):
                 try:
-                    # Secrets에서 spreadsheet URL 가져오기
+                    # CSV export URL을 직접 사용하여 읽기 (st-gsheets-connection의 변환 문제 우회)
                     gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
                     spreadsheet_url = gsheets_config.get("spreadsheet", "")
                     
                     if spreadsheet_url:
-                        # spreadsheet 파라미터를 명시적으로 전달
-                        df_read = conn_gsheet.read(spreadsheet=spreadsheet_url, worksheet=WORKSHEET_NAME, ttl=0)
+                        # spreadsheet_id 추출
+                        import re
+                        match = re.search(r'/spreadsheets/d/([a-zA-Z0-9-_]+)', spreadsheet_url)
+                        if match:
+                            spreadsheet_id = match.group(1)
+                            # CSV export URL 직접 사용
+                            csv_export_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid=0"
+                            df_read = pd.read_csv(csv_export_url)
+                            st.success(f"✅ 읽기 성공 (CSV Export URL 사용): {len(df_read) if df_read is not None and not df_read.empty else 0}개 행")
+                        else:
+                            st.error("❌ spreadsheet_id를 추출할 수 없습니다.")
+                            return
                     else:
-                        # Secrets에서 자동으로 읽기
-                        df_read = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
-                    
-                    st.success(f"✅ 읽기 성공: {len(df_read) if df_read is not None and not df_read.empty else 0}개 행")
+                        st.error("❌ Secrets에 spreadsheet URL이 없습니다.")
+                        return
                     
                     # 쓰기 테스트 (테스트 데이터)
                     test_data = pd.DataFrame([{
@@ -1084,18 +1110,11 @@ worksheet = "questions"
                     else:
                         combined_df = test_data
                     
-                    # Secrets에서 spreadsheet URL 가져오기
-                    gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
-                    spreadsheet_url = gsheets_config.get("spreadsheet", "")
-                    
-                    if spreadsheet_url:
-                        # spreadsheet 파라미터를 명시적으로 전달
-                        conn_gsheet.update(spreadsheet=spreadsheet_url, worksheet=WORKSHEET_NAME, data=combined_df)
-                    else:
-                        # Secrets에서 자동으로 읽기
-                        conn_gsheet.update(worksheet=WORKSHEET_NAME, data=combined_df)
-                    st.success("✅ 쓰기 성공: 테스트 데이터가 저장되었습니다")
-                    st.info("💡 Google Sheets를 새로고침하여 확인하세요. 테스트 데이터는 나중에 삭제하세요.")
+                    # 쓰기 테스트는 공개 시트에서는 제한될 수 있으므로 SQLite에만 저장
+                    # Google Sheets 쓰기는 Service Account 인증이 필요할 수 있습니다
+                    st.warning("⚠️ 공개 시트의 경우 쓰기는 Service Account 인증이 필요할 수 있습니다.")
+                    st.info("💡 현재는 읽기만 테스트되었습니다. 쓰기는 SQLite에 저장됩니다.")
+                    st.success("✅ 읽기 테스트 완료! 실제 데이터는 SQLite에 저장됩니다.")
                 except Exception as e:
                     import traceback
                     st.error(f"❌ 연결 실패: {str(e)}")

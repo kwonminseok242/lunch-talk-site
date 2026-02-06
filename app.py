@@ -122,8 +122,25 @@ def load_questions():
     # 1. Google Sheets 우선
     if USE_GSHEETS and conn_gsheet:
         try:
-            # Secrets에서 자동으로 spreadsheet를 읽도록 함
-            df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+            # CSV export URL을 직접 사용하여 읽기 (st-gsheets-connection의 변환 문제 우회)
+            gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+            spreadsheet_url = gsheets_config.get("spreadsheet", "")
+            
+            if spreadsheet_url:
+                # spreadsheet_id 추출
+                import re
+                match = re.search(r'/spreadsheets/d/([a-zA-Z0-9-_]+)', spreadsheet_url)
+                if match:
+                    spreadsheet_id = match.group(1)
+                    # CSV export URL 직접 사용
+                    csv_export_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/export?format=csv&gid=0"
+                    df = pd.read_csv(csv_export_url)
+                else:
+                    # 기존 방식 시도
+                    df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+            else:
+                df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+            
             if df is not None and not df.empty:
                 questions = df.to_dict('records')
                 result = []
