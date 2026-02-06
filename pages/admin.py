@@ -104,69 +104,55 @@ st.set_page_config(
     layout="wide"
 )
 
-# 커스텀 CSS - 애플 스타일 Liquid Glass 디자인
+# 커스텀 CSS - 어두운 계열 모던 Glass 디자인
 st.markdown(f"""
 <style>
-    /* 전체 배경 그라데이션 */
+    /* 전체 배경 - 어두운 그라데이션 */
     .main {{
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #004C97 50%, #0066CC 75%, #004C97 100%);
-        background-size: 400% 400%;
-        animation: gradientShift 15s ease infinite;
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
         min-height: 100vh;
     }}
     
-    @keyframes gradientShift {{
-        0% {{ background-position: 0% 50%; }}
-        50% {{ background-position: 100% 50%; }}
-        100% {{ background-position: 0% 50%; }}
-    }}
-    
-    /* 스트림릿 컨테이너 유리 효과 */
+    /* 스트림릿 컨테이너 - 투명하게 */
     .block-container {{
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        background: transparent;
         padding: 2rem;
         margin-top: 1rem;
     }}
     
-    /* 버튼 - Liquid Glass 효과 */
+    /* 버튼 - 모던 글래스 효과 */
     .stButton>button {{
-        background: linear-gradient(135deg, rgba(0, 76, 151, 0.8), rgba(0, 102, 204, 0.9));
+        background: rgba(0, 76, 151, 0.9);
         color: white;
-        border-radius: 16px;
-        padding: 0.75rem 2.5rem;
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
         font-weight: 600;
         font-size: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px 0 rgba(0, 76, 151, 0.37), 
-                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 8px 32px rgba(0, 76, 151, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
         text-transform: none;
-        letter-spacing: 0.5px;
     }}
     
     .stButton>button:hover {{
-        background: linear-gradient(135deg, rgba(0, 102, 204, 0.9), rgba(0, 76, 151, 0.95));
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 12px 40px 0 rgba(0, 76, 151, 0.5),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        background: {WOORI_LIGHT_BLUE};
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 102, 204, 0.5),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }}
     
-    /* 입력 필드 - Glassmorphism */
+    /* 입력 필드 - 글래스 효과 */
     .stTextInput>div>div>input {{
         background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        color: #ffffff;
         padding: 0.75rem 1rem;
         font-size: 1rem;
         transition: all 0.3s ease;
@@ -174,32 +160,30 @@ st.markdown(f"""
     
     .stTextInput>div>div>input:focus {{
         background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: 0 4px 20px rgba(0, 76, 151, 0.3);
+        border: 1px solid {WOORI_LIGHT_BLUE};
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
         outline: none;
     }}
     
     .stTextInput>div>div>input::placeholder {{
-        color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.4);
     }}
     
     /* 타이틀 스타일 */
     h1 {{
-        color: rgba(255, 255, 255, 0.95);
+        color: #ffffff;
         font-weight: 700;
-        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         letter-spacing: -1px;
     }}
     
     h2, h3 {{
-        color: rgba(255, 255, 255, 0.95);
+        color: #ffffff;
         font-weight: 600;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }}
     
     /* 메트릭 스타일 */
     [data-testid="stMetricValue"] {{
-        color: rgba(255, 255, 255, 0.95);
+        color: #ffffff;
         font-weight: 700;
     }}
     
@@ -209,11 +193,12 @@ st.markdown(f"""
     
     /* 탭 스타일 */
     .stTabs [data-baseweb="tab-list"] {{
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 12px;
         padding: 0.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }}
     
     .stTabs [data-baseweb="tab"] {{
@@ -224,44 +209,44 @@ st.markdown(f"""
     
     .stTabs [aria-selected="true"] {{
         background: rgba(255, 255, 255, 0.15);
-        color: rgba(255, 255, 255, 0.95);
+        color: #ffffff;
     }}
     
     /* Expander 스타일 */
     .streamlit-expanderHeader {{
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 12px;
         color: rgba(255, 255, 255, 0.9);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.15);
     }}
     
     /* Dataframe 스타일 */
     .dataframe {{
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 12px;
     }}
     
     /* Alert 박스 스타일 */
     .stAlert {{
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 12px;
     }}
     
     /* 셀렉트박스 스타일 */
     .stSelectbox>div>div>select {{
         background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        color: #ffffff;
     }}
     
     .stSelectbox label {{
@@ -284,7 +269,7 @@ def check_admin():
     if not st.session_state.admin_authenticated:
         st.markdown("""
         <div style="text-align: center; padding: 3rem 0 2rem 0;">
-            <h1 style="margin-bottom: 0.5rem; font-size: 3rem; font-weight: 700; letter-spacing: -2px; color: rgba(255, 255, 255, 0.95);">
+            <h1 style="margin-bottom: 0.5rem; font-size: 3rem; font-weight: 700; letter-spacing: -2px; color: #ffffff;">
                 🔐 관리자 로그인
             </h1>
         </div>
@@ -303,9 +288,9 @@ def check_admin():
         
         st.markdown("---")
         st.markdown("""
-        <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                    padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);
-                    text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                    padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
+                    text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
             <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; margin: 0;">
                 💡 관리자만 접근할 수 있는 페이지입니다
             </p>
@@ -351,14 +336,13 @@ def export_to_excel():
 
 # 관리자 인증 확인
 if check_admin():
-    # 헤더 - Liquid Glass 스타일
+    # 헤더 - 글래스 스타일
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, rgba(0, 76, 151, 0.3), rgba(0, 102, 204, 0.3)); 
-                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                padding: 2rem; border-radius: 20px; margin-bottom: 2rem;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);">
-        <h1 style="color: rgba(255, 255, 255, 0.95); margin: 0; text-align: center; font-weight: 700; font-size: 2.5rem; letter-spacing: -1px;">
+    <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                padding: 2rem; border-radius: 16px; margin-bottom: 2rem;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);">
+        <h1 style="color: #ffffff; margin: 0; text-align: center; font-weight: 700; font-size: 2.5rem;">
             🔐 관리자 페이지
         </h1>
     </div>
@@ -384,9 +368,9 @@ if check_admin():
         
         if not questions:
             st.markdown("""
-            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                        padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);
-                        text-align: center;">
+            <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                        padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
+                        text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
                 <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem; margin: 0;">
                     등록된 질문이 없습니다
                 </p>
@@ -504,9 +488,9 @@ if check_admin():
                 st.warning(f"방문자 통계 로드 오류: {e}")
         else:
             st.markdown("""
-            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                        padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);
-                        text-align: center;">
+            <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                        padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
+                        text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
                 <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; margin: 0;">
                     ℹ️ 방문자 통계 기능을 사용할 수 없습니다
                 </p>
@@ -517,9 +501,9 @@ if check_admin():
         st.subheader("📝 질문 통계")
         if not questions:
             st.markdown("""
-            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                        padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);
-                        text-align: center;">
+            <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                        padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
+                        text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
                 <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem; margin: 0;">
                     질문 데이터가 없습니다
                 </p>
@@ -595,20 +579,20 @@ if check_admin():
         
         if not questions:
             st.markdown("""
-            <div style="background: rgba(255, 193, 7, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                        padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 193, 7, 0.3);
+            <div style="background: rgba(255, 193, 7, 0.1); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                        padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.2);
                         text-align: center;">
-                <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.1rem; margin: 0;">
+                <p style="color: #ffffff; font-size: 1.1rem; margin: 0;">
                     내보낼 데이터가 없습니다
                 </p>
             </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown(f"""
-            <div style="background: rgba(0, 102, 204, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                        padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(0, 102, 204, 0.3);
+            <div style="background: rgba(0, 102, 204, 0.15); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                        padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(0, 102, 204, 0.2);
                         text-align: center; margin-bottom: 1.5rem;">
-                <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.1rem; margin: 0;">
+                <p style="color: #ffffff; font-size: 1.1rem; margin: 0;">
                     총 {len(questions)}개의 질문을 내보낼 수 있습니다
                 </p>
             </div>
@@ -658,18 +642,18 @@ if check_admin():
         st.subheader("📊 데이터 저장 상태")
         if USE_GSHEETS and conn_gsheet:
             st.markdown("""
-            <div style="background: rgba(40, 167, 69, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(40, 167, 69, 0.3);
+            <div style="background: rgba(40, 167, 69, 0.15); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(40, 167, 69, 0.2);
                         text-align: center;">
-                <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0;">
+                <p style="color: #ffffff; font-size: 1rem; margin: 0;">
                     ✅ 데이터 저장소 연결됨
                 </p>
             </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown("""
-            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2);
+            <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15);
                         text-align: center;">
                 <p style="color: rgba(255, 255, 255, 0.9); font-size: 1rem; margin: 0;">
                     ℹ️ 로컬 파일 모드
@@ -681,18 +665,18 @@ if check_admin():
         
         st.subheader("🔐 비밀번호 변경")
         st.markdown("""
-        <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2);
+        <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15);
                     margin-bottom: 1rem;">
             <p style="color: rgba(255, 255, 255, 0.9); font-size: 1rem; margin: 0;">
-                현재 비밀번호: <code style="background: rgba(0, 0, 0, 0.2); padding: 0.2rem 0.5rem; border-radius: 4px;">woori2024</code>
+                현재 비밀번호: <code style="background: rgba(0, 0, 0, 0.3); padding: 0.2rem 0.5rem; border-radius: 4px; color: #ffffff;">woori2024</code>
             </p>
         </div>
         """, unsafe_allow_html=True)
         st.markdown("""
-        <div style="background: rgba(255, 193, 7, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.3);">
-            <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0;">
+        <div style="background: rgba(255, 193, 7, 0.1); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.2);">
+            <p style="color: #ffffff; font-size: 1rem; margin: 0;">
                 ⚠️ 비밀번호를 변경하려면 코드를 수정하거나 Streamlit Cloud Secrets를 사용하세요
             </p>
         </div>
@@ -702,10 +686,10 @@ if check_admin():
         
         st.subheader("🗑️ 전체 데이터 삭제")
         st.markdown("""
-        <div style="background: rgba(220, 53, 69, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(220, 53, 69, 0.3);
+        <div style="background: rgba(220, 53, 69, 0.15); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(220, 53, 69, 0.2);
                     margin-bottom: 1rem;">
-            <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0; font-weight: 600;">
+            <p style="color: #ffffff; font-size: 1rem; margin: 0; font-weight: 600;">
                 ⚠️ 주의: 이 작업은 되돌릴 수 없습니다!
             </p>
         </div>
@@ -716,10 +700,10 @@ if check_admin():
                 save_questions([])
                 st.session_state.confirm_delete = False
                 st.markdown("""
-                <div style="background: rgba(40, 167, 69, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                            padding: 1rem; border-radius: 12px; border: 1px solid rgba(40, 167, 69, 0.3);
+                <div style="background: rgba(40, 167, 69, 0.15); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                            padding: 1rem; border-radius: 12px; border: 1px solid rgba(40, 167, 69, 0.2);
                             text-align: center; margin-top: 1rem;">
-                    <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0;">
+                    <p style="color: #ffffff; font-size: 1rem; margin: 0;">
                         ✅ 모든 질문이 삭제되었습니다
                     </p>
                 </div>
@@ -728,10 +712,10 @@ if check_admin():
             else:
                 st.session_state.confirm_delete = True
                 st.markdown("""
-                <div style="background: rgba(255, 193, 7, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                            padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.3);
+                <div style="background: rgba(255, 193, 7, 0.1); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                            padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.2);
                             text-align: center; margin-top: 1rem;">
-                    <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0;">
+                    <p style="color: #ffffff; font-size: 1rem; margin: 0;">
                         ⚠️ 다시 클릭하면 삭제됩니다
                     </p>
                 </div>

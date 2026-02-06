@@ -1,7 +1,7 @@
 [theme]
 primaryColor = "#004C97"
-backgroundColor = "#667eea"
-secondaryBackgroundColor = "rgba(255, 255, 255, 0.1)"
+backgroundColor = "#0a0e27"
+secondaryBackgroundColor = "#1a1f3a"
 textColor = "#FFFFFF"
 font = "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif"
 

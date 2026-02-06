@@ -143,79 +143,64 @@ def like_question(question_id):
     st.success("👍 좋아요가 반영되었습니다!")
     st.rerun()
 
-# 커스텀 CSS - 애플 스타일 Liquid Glass 디자인
+# 커스텀 CSS - 어두운 계열 모던 Glass 디자인
 st.markdown(f"""
 <style>
-    /* 전체 배경 그라데이션 */
+    /* 전체 배경 - 어두운 그라데이션 */
     .main {{
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #004C97 50%, #0066CC 75%, #004C97 100%);
-        background-size: 400% 400%;
-        animation: gradientShift 15s ease infinite;
+        background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
         min-height: 100vh;
     }}
     
-    @keyframes gradientShift {{
-        0% {{ background-position: 0% 50%; }}
-        50% {{ background-position: 100% 50%; }}
-        100% {{ background-position: 0% 50%; }}
-    }}
-    
-    /* 스트림릿 컨테이너 유리 효과 */
+    /* 스트림릿 컨테이너 - 투명하게 */
     .block-container {{
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.18);
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        background: transparent;
         padding: 2rem;
         margin-top: 1rem;
     }}
     
-    /* 버튼 - Liquid Glass 효과 */
+    /* 버튼 - 모던 글래스 효과 */
     .stButton>button {{
-        background: linear-gradient(135deg, rgba(0, 76, 151, 0.8), rgba(0, 102, 204, 0.9));
+        background: rgba(0, 76, 151, 0.9);
         color: white;
-        border-radius: 16px;
-        padding: 0.75rem 2.5rem;
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
         font-weight: 600;
         font-size: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px 0 rgba(0, 76, 151, 0.37), 
-                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        box-shadow: 0 8px 32px rgba(0, 76, 151, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
         text-transform: none;
-        letter-spacing: 0.5px;
     }}
     
     .stButton>button:hover {{
-        background: linear-gradient(135deg, rgba(0, 102, 204, 0.9), rgba(0, 76, 151, 0.95));
-        transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 12px 40px 0 rgba(0, 76, 151, 0.5),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.4);
+        background: {WOORI_LIGHT_BLUE};
+        transform: translateY(-2px);
+        box-shadow: 0 12px 40px rgba(0, 102, 204, 0.5),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }}
     
     .stButton>button:active {{
-        transform: translateY(-1px) scale(0.98);
+        transform: translateY(0);
     }}
     
-    /* 질문 카드 - Glassmorphism */
+    /* 질문 카드 - 진짜 글래스 효과 */
     .question-card {{
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
         padding: 2rem;
-        border-radius: 24px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
         margin-bottom: 1.5rem;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2),
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
                     inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.3s ease;
         position: relative;
-        overflow: hidden;
     }}
     
     .question-card::before {{
@@ -224,31 +209,25 @@ st.markdown(f"""
         top: 0;
         left: 0;
         width: 100%;
-        height: 4px;
-        background: linear-gradient(90deg, {WOORI_BLUE}, {WOORI_LIGHT_BLUE}, {WOORI_BLUE});
-        background-size: 200% 100%;
-        animation: shimmer 3s ease infinite;
-    }}
-    
-    @keyframes shimmer {{
-        0% {{ background-position: -200% 0; }}
-        100% {{ background-position: 200% 0; }}
+        height: 3px;
+        background: linear-gradient(90deg, {WOORI_BLUE}, {WOORI_LIGHT_BLUE});
+        border-radius: 16px 16px 0 0;
     }}
     
     .question-card:hover {{
-        transform: translateY(-4px);
-        box-shadow: 0 12px 48px 0 rgba(0, 0, 0, 0.3),
+        transform: translateY(-2px);
+        background: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5),
                     inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }}
     
     .question-header {{
-        color: rgba(255, 255, 255, 0.95);
+        color: #ffffff;
         font-weight: 700;
         font-size: 1.2rem;
         margin-bottom: 1rem;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        letter-spacing: -0.5px;
+        letter-spacing: -0.3px;
     }}
     
     .question-text {{
@@ -258,11 +237,10 @@ st.markdown(f"""
         margin-bottom: 1rem;
         white-space: pre-wrap;
         word-wrap: break-word;
-        text-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
     }}
     
     .question-meta {{
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.6);
         font-size: 0.9rem;
         display: flex;
         justify-content: space-between;
@@ -273,33 +251,27 @@ st.markdown(f"""
     
     /* 타이틀 스타일 */
     h1 {{
-        color: rgba(255, 255, 255, 0.95);
+        color: #ffffff;
         text-align: center;
         padding-bottom: 1.5rem;
         font-weight: 700;
         font-size: 2.5rem;
-        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         letter-spacing: -1px;
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
     }}
     
     h2 {{
-        color: rgba(255, 255, 255, 0.95);
+        color: #ffffff;
         font-weight: 600;
-        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
     }}
     
-    /* 입력 필드 - Glassmorphism */
+    /* 입력 필드 - 글래스 효과 */
     .stTextInput>div>div>input {{
         background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        color: #ffffff;
         padding: 0.75rem 1rem;
         font-size: 1rem;
         transition: all 0.3s ease;
@@ -307,22 +279,22 @@ st.markdown(f"""
     
     .stTextInput>div>div>input:focus {{
         background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: 0 4px 20px rgba(0, 76, 151, 0.3);
+        border: 1px solid {WOORI_LIGHT_BLUE};
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
         outline: none;
     }}
     
     .stTextInput>div>div>input::placeholder {{
-        color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.4);
     }}
     
     .stTextArea>div>div>textarea {{
         background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        color: #ffffff;
         padding: 1rem;
         font-size: 1rem;
         transition: all 0.3s ease;
@@ -330,18 +302,18 @@ st.markdown(f"""
     
     .stTextArea>div>div>textarea:focus {{
         background: rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        box-shadow: 0 4px 20px rgba(0, 76, 151, 0.3);
+        border: 1px solid {WOORI_LIGHT_BLUE};
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
         outline: none;
     }}
     
     .stTextArea>div>div>textarea::placeholder {{
-        color: rgba(255, 255, 255, 0.5);
+        color: rgba(255, 255, 255, 0.4);
     }}
     
     /* 사이드바 스타일 */
     .css-1d391kg {{
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border-right: 1px solid rgba(255, 255, 255, 0.1);
@@ -365,16 +337,16 @@ st.markdown(f"""
     
     .stSelectbox>div>div>select {{
         background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        color: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 10px;
+        color: #ffffff;
     }}
     
     /* 메트릭 스타일 */
     [data-testid="stMetricValue"] {{
-        color: rgba(255, 255, 255, 0.95);
+        color: #ffffff;
         font-weight: 700;
     }}
     
@@ -384,25 +356,26 @@ st.markdown(f"""
     
     /* 캡션 스타일 */
     .stCaption {{
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.6);
     }}
     
     /* Info/Warning/Success 박스 스타일 */
     .stAlert {{
         background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
         border-radius: 12px;
     }}
     
     /* Expander 스타일 */
     .streamlit-expanderHeader {{
-        background: rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border-radius: 12px;
         color: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }}
     
     /* 스크롤바 스타일 */
@@ -411,7 +384,7 @@ st.markdown(f"""
     }}
     
     ::-webkit-scrollbar-track {{
-        background: rgba(255, 255, 255, 0.05);
+        background: rgba(0, 0, 0, 0.2);
         border-radius: 10px;
     }}
     
@@ -423,6 +396,18 @@ st.markdown(f"""
     ::-webkit-scrollbar-thumb:hover {{
         background: rgba(255, 255, 255, 0.3);
     }}
+    
+    /* 글래스 카드 컨테이너 */
+    .glass-card {{
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -433,13 +418,13 @@ if STATS_ENABLED:
     except:
         pass
 
-# 메인 타이틀 - Liquid Glass 스타일
+# 메인 타이틀 - 모던 스타일
 st.markdown(f"""
 <div style="text-align: center; padding: 3rem 0 2rem 0;">
-    <h1 style="margin-bottom: 0.5rem; font-size: 3rem; font-weight: 700; letter-spacing: -2px;">
+    <h1 style="margin-bottom: 0.5rem; font-size: 3rem; font-weight: 700; letter-spacing: -2px; color: #ffffff;">
         💬 현직자 런치톡 질문 수집
     </h1>
-    <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; font-weight: 300; letter-spacing: 0.5px; margin-top: 1rem;">
+    <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.2rem; font-weight: 300; letter-spacing: 0.5px; margin-top: 1rem;">
         함께 수강하는 분들의 질문을 모아서 현직자분께 전달하겠습니다
     </p>
 </div>
@@ -455,11 +440,11 @@ if STATS_ENABLED:
         
         if current_visitors > 0:
             st.markdown(f"""
-            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); 
-                        padding: 1rem; border-radius: 16px; margin-bottom: 1.5rem; text-align: center; 
-                        border: 1px solid rgba(255, 255, 255, 0.2); 
-                        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);">
-                <strong style="color: rgba(255, 255, 255, 0.95); font-size: 1.1rem; font-weight: 600; letter-spacing: 0.5px;">
+            <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); 
+                        padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: center; 
+                        border: 1px solid rgba(255, 255, 255, 0.15); 
+                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);">
+                <strong style="color: #ffffff; font-size: 1.1rem; font-weight: 600;">
                     👥 현재 접속 중: {current_visitors}명
                 </strong>
             </div>
@@ -470,12 +455,11 @@ if STATS_ENABLED:
 # 사이드바 - 질문 작성 및 필터
 with st.sidebar:
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, rgba(0, 76, 151, 0.3), rgba(0, 102, 204, 0.3)); 
-                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                padding: 2rem; border-radius: 20px; margin-bottom: 2rem;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);">
-        <h2 style="color: rgba(255, 255, 255, 0.95); margin: 0; text-align: center; font-weight: 700; font-size: 1.5rem; letter-spacing: -0.5px;">
+    <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                padding: 2rem; border-radius: 16px; margin-bottom: 2rem;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);">
+        <h2 style="color: #ffffff; margin: 0; text-align: center; font-weight: 700; font-size: 1.5rem;">
             📝 질문 작성
         </h2>
     </div>
@@ -488,7 +472,7 @@ with st.sidebar:
         name = st.text_input("이름", placeholder="예: 홍길동", help="이름을 입력하지 않으면 익명으로 표시됩니다", max_chars=20, key="input_name")
     else:
         name = ""
-        st.markdown('<p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-top: -0.5rem;">ℹ️ 익명으로 질문이 등록됩니다</p>', unsafe_allow_html=True)
+        st.markdown('<p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-top: -0.5rem;">ℹ️ 익명으로 질문이 등록됩니다</p>', unsafe_allow_html=True)
     
     question = st.text_area(
         "질문 내용 *",
@@ -503,9 +487,9 @@ with st.sidebar:
     if question:
         char_count = len(question)
         if char_count > 900:
-            st.markdown(f'<p style="color: rgba(255, 193, 7, 0.9); font-size: 0.85rem; margin-top: -0.5rem;">⚠️ {char_count}/1000자 (거의 다 채웠습니다)</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: #ffc107; font-size: 0.85rem; margin-top: -0.5rem;">⚠️ {char_count}/1000자 (거의 다 채웠습니다)</p>', unsafe_allow_html=True)
         elif char_count > 0:
-            st.markdown(f'<p style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem; margin-top: -0.5rem;">📝 {char_count}/1000자</p>', unsafe_allow_html=True)
+            st.markdown(f'<p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; margin-top: -0.5rem;">📝 {char_count}/1000자</p>', unsafe_allow_html=True)
     
     # 질문 등록 버튼
     if st.button("✅ 질문 등록하기", use_container_width=True, type="primary"):
@@ -554,7 +538,7 @@ questions = load_questions()
 # 검색 및 정렬을 메인 영역에도 추가
 col_title, col_search, col_sort = st.columns([2, 2, 2])
 with col_title:
-    st.markdown('<h2 style="color: rgba(255, 255, 255, 0.95); font-weight: 700; margin-bottom: 0;">📋 등록된 질문 목록</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color: #ffffff; font-weight: 700; margin-bottom: 0;">📋 등록된 질문 목록</h2>', unsafe_allow_html=True)
 with col_search:
     # 메인 검색창 (사이드바와 동기화)
     search_input_main = st.text_input("🔎 검색", placeholder="키워드로 검색...", key="search_main", label_visibility="collapsed", value=st.session_state.search_query)
@@ -591,10 +575,10 @@ else:
 if not questions:
     if st.session_state.search_query:
         st.markdown(f"""
-        <div style="background: rgba(255, 193, 7, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                    padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 193, 7, 0.3);
+        <div style="background: rgba(255, 193, 7, 0.1); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                    padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.2);
                     margin-bottom: 1rem; text-align: center;">
-            <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.1rem; margin: 0;">
+            <p style="color: #ffffff; font-size: 1.1rem; margin: 0;">
                 🔍 '{st.session_state.search_query}'에 대한 검색 결과가 없습니다.
             </p>
         </div>
@@ -604,9 +588,9 @@ if not questions:
             st.rerun()
     else:
         st.markdown("""
-        <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                    padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);
-                    text-align: center;">
+        <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                    padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
+                    text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
             <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem; margin: 0;">
                 아직 등록된 질문이 없습니다. 첫 번째 질문을 작성해보세요! 💡
             </p>
@@ -616,10 +600,10 @@ else:
     # 검색 결과 표시
     if st.session_state.search_query:
         st.markdown(f"""
-        <div style="background: rgba(0, 102, 204, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(0, 102, 204, 0.3);
+        <div style="background: rgba(0, 102, 204, 0.15); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(0, 102, 204, 0.2);
                     margin-bottom: 1rem; text-align: center;">
-            <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0;">
+            <p style="color: #ffffff; font-size: 1rem; margin: 0;">
                 🔍 '{st.session_state.search_query}' 검색 결과: {len(questions_sorted)}개
             </p>
         </div>
@@ -628,7 +612,7 @@ else:
     # 질문 개수 표시
     total_questions = len(load_questions())
     if len(questions_sorted) != total_questions:
-        st.markdown(f'<p style="color: rgba(255, 255, 255, 0.6); font-size: 0.85rem; margin-top: -0.5rem;">전체 {total_questions}개 중 {len(questions_sorted)}개 표시</p>', unsafe_allow_html=True)
+        st.markdown(f'<p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; margin-top: -0.5rem;">전체 {total_questions}개 중 {len(questions_sorted)}개 표시</p>', unsafe_allow_html=True)
     
     for idx, q in enumerate(questions_sorted, 1):
         with st.container():
@@ -661,57 +645,57 @@ else:
                     if st.button("👍 좋아요", key=f"like_{q['id']}", use_container_width=True):
                         like_question(q["id"])
             with col3:
-                st.markdown(f'<p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; text-align: right;">#{q["id"]}</p>', unsafe_allow_html=True)
+                st.markdown(f'<p style="color: rgba(255, 255, 255, 0.4); font-size: 0.85rem; text-align: right;">#{q["id"]}</p>', unsafe_allow_html=True)
             
             st.markdown("---")
 
-# 통계 정보 - Liquid Glass 스타일
+# 통계 정보 - 글래스 카드 스타일
 st.markdown("---")
 col1, col2, col3 = st.columns(3)
 with col1:
     st.markdown(f"""
-    <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
-                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); text-align: center;">
-        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-bottom: 0.5rem;">총 질문 수</p>
-        <p style="color: rgba(255, 255, 255, 0.95); font-size: 2rem; font-weight: 700; margin: 0;">{len(load_questions())}</p>
+    <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); text-align: center;">
+        <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">총 질문 수</p>
+        <p style="color: #ffffff; font-size: 2rem; font-weight: 700; margin: 0;">{len(load_questions())}</p>
     </div>
     """, unsafe_allow_html=True)
 with col2:
     all_questions = load_questions()
     total_likes = sum(q.get("likes", 0) for q in all_questions)
     st.markdown(f"""
-    <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
-                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); text-align: center;">
-        <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-bottom: 0.5rem;">총 좋아요</p>
-        <p style="color: rgba(255, 255, 255, 0.95); font-size: 2rem; font-weight: 700; margin: 0;">{total_likes}</p>
+    <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); text-align: center;">
+        <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">총 좋아요</p>
+        <p style="color: #ffffff; font-size: 2rem; font-weight: 700; margin: 0;">{total_likes}</p>
     </div>
     """, unsafe_allow_html=True)
 with col3:
     if all_questions:
         avg_likes = total_likes / len(all_questions) if all_questions else 0
         st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                    padding: 1.5rem; border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.2);
-                    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); text-align: center;">
-            <p style="color: rgba(255, 255, 255, 0.7); font-size: 0.9rem; margin-bottom: 0.5rem;">평균 좋아요</p>
-            <p style="color: rgba(255, 255, 255, 0.95); font-size: 2rem; font-weight: 700; margin: 0;">{avg_likes:.1f}</p>
+        <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                    padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); text-align: center;">
+            <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">평균 좋아요</p>
+            <p style="color: #ffffff; font-size: 2rem; font-weight: 700; margin: 0;">{avg_likes:.1f}</p>
         </div>
         """, unsafe_allow_html=True)
 
-# 푸터 - Liquid Glass 스타일
+# 푸터 - 글래스 스타일
 st.markdown("---")
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     st.markdown(f"""
-    <div style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-                text-align: center; color: rgba(255, 255, 255, 0.8); padding: 2rem; border-radius: 20px;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); margin-top: 2rem;">
+    <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem; border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); margin-top: 2rem;">
         <p style="font-size: 1rem; margin-bottom: 0.5rem;">💡 질문은 실시간으로 업데이트됩니다</p>
         <p style="font-size: 1rem; margin-bottom: 1rem;">🔄 페이지를 새로고침하면 최신 질문을 확인할 수 있습니다</p>
-        <p style="color: rgba(255, 255, 255, 0.95); font-weight: 700; font-size: 1.2rem; margin-top: 1rem; letter-spacing: 0.5px;">
+        <p style="color: #ffffff; font-weight: 700; font-size: 1.2rem; margin-top: 1rem;">
             우리은행 FISA 부트캠프 💙
         </p>
     </div>
