@@ -218,14 +218,6 @@ st.markdown(f"""
 
 # 사이드바 - 질문 작성 및 필터
 with st.sidebar:
-    # Google Sheets 연결 상태 표시
-    if USE_GSHEETS:
-        st.success("✅ Google Sheets 연동됨\n모든 사용자가 같은 질문을 볼 수 있습니다")
-    else:
-        st.info("ℹ️ 로컬 파일 모드\nGoogle Sheets 연동 방법은 README 참고")
-    
-    st.markdown("---")
-    
     st.markdown(f"""
     <div style="background-color: {WOORI_BLUE}; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem;">
         <h2 style="color: white; margin: 0; text-align: center;">📝 질문 작성</h2>

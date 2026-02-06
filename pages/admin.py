@@ -356,12 +356,10 @@ if check_admin():
         st.header("⚙️ 관리자 설정")
         
         st.subheader("📊 데이터 저장 상태")
-        if USE_GSHEETS:
-            st.success("✅ Google Sheets 연동 중")
-            st.info("모든 사용자가 같은 질문 목록을 볼 수 있습니다")
+        if USE_GSHEETS and conn_gsheet:
+            st.success("✅ 데이터 저장소 연결됨")
         else:
             st.info("ℹ️ 로컬 파일 모드")
-            st.warning("Google Sheets 연동을 권장합니다")
         
         st.markdown("---")
         
