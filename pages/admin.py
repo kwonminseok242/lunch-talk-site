@@ -4,14 +4,18 @@
 """
 
 import streamlit as st
-import pandas as pd
-from datetime import datetime
-import streamlit as st
 import json
 import os
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
+
+# 통계 모듈 임포트
+try:
+    from utils_stats import load_stats, get_daily_stats, get_all_time_stats, get_current_visitors
+    STATS_ENABLED = True
+except ImportError:
+    STATS_ENABLED = False
 
 # Google Sheets 연동
 try:
@@ -100,6 +104,172 @@ st.set_page_config(
     layout="wide"
 )
 
+# 커스텀 CSS - 애플 스타일 Liquid Glass 디자인
+st.markdown(f"""
+<style>
+    /* 전체 배경 그라데이션 */
+    .main {{
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #004C97 50%, #0066CC 75%, #004C97 100%);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        min-height: 100vh;
+    }}
+    
+    @keyframes gradientShift {{
+        0% {{ background-position: 0% 50%; }}
+        50% {{ background-position: 100% 50%; }}
+        100% {{ background-position: 0% 50%; }}
+    }}
+    
+    /* 스트림릿 컨테이너 유리 효과 */
+    .block-container {{
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        padding: 2rem;
+        margin-top: 1rem;
+    }}
+    
+    /* 버튼 - Liquid Glass 효과 */
+    .stButton>button {{
+        background: linear-gradient(135deg, rgba(0, 76, 151, 0.8), rgba(0, 102, 204, 0.9));
+        color: white;
+        border-radius: 16px;
+        padding: 0.75rem 2.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px 0 rgba(0, 76, 151, 0.37), 
+                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: none;
+        letter-spacing: 0.5px;
+    }}
+    
+    .stButton>button:hover {{
+        background: linear-gradient(135deg, rgba(0, 102, 204, 0.9), rgba(0, 76, 151, 0.95));
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 40px 0 rgba(0, 76, 151, 0.5),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+    }}
+    
+    /* 입력 필드 - Glassmorphism */
+    .stTextInput>div>div>input {{
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.95);
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }}
+    
+    .stTextInput>div>div>input:focus {{
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 4px 20px rgba(0, 76, 151, 0.3);
+        outline: none;
+    }}
+    
+    .stTextInput>div>div>input::placeholder {{
+        color: rgba(255, 255, 255, 0.5);
+    }}
+    
+    /* 타이틀 스타일 */
+    h1 {{
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 700;
+        text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        letter-spacing: -1px;
+    }}
+    
+    h2, h3 {{
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 600;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }}
+    
+    /* 메트릭 스타일 */
+    [data-testid="stMetricValue"] {{
+        color: rgba(255, 255, 255, 0.95);
+        font-weight: 700;
+    }}
+    
+    [data-testid="stMetricLabel"] {{
+        color: rgba(255, 255, 255, 0.7);
+    }}
+    
+    /* 탭 스타일 */
+    .stTabs [data-baseweb="tab-list"] {{
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        padding: 0.5rem;
+    }}
+    
+    .stTabs [data-baseweb="tab"] {{
+        color: rgba(255, 255, 255, 0.7);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }}
+    
+    .stTabs [aria-selected="true"] {{
+        background: rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.95);
+    }}
+    
+    /* Expander 스타일 */
+    .streamlit-expanderHeader {{
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }}
+    
+    /* Dataframe 스타일 */
+    .dataframe {{
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 12px;
+    }}
+    
+    /* Alert 박스 스타일 */
+    .stAlert {{
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+    }}
+    
+    /* 셀렉트박스 스타일 */
+    .stSelectbox>div>div>select {{
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        color: rgba(255, 255, 255, 0.95);
+    }}
+    
+    .stSelectbox label {{
+        color: rgba(255, 255, 255, 0.9);
+    }}
+</style>
+""", unsafe_allow_html=True)
+
 # 관리자 비밀번호 (실제 사용 시 환경변수나 secrets로 관리)
 try:
     ADMIN_PASSWORD = st.secrets.get("admin_password", "woori2024")
@@ -112,7 +282,13 @@ def check_admin():
         st.session_state.admin_authenticated = False
     
     if not st.session_state.admin_authenticated:
-        st.title("🔐 관리자 로그인")
+        st.markdown("""
+        <div style="text-align: center; padding: 3rem 0 2rem 0;">
+            <h1 style="margin-bottom: 0.5rem; font-size: 3rem; font-weight: 700; letter-spacing: -2px; color: rgba(255, 255, 255, 0.95);">
+                🔐 관리자 로그인
+            </h1>
+        </div>
+        """, unsafe_allow_html=True)
         
         password = st.text_input("비밀번호를 입력하세요", type="password")
         
@@ -126,7 +302,15 @@ def check_admin():
                     st.error("❌ 비밀번호가 올바르지 않습니다")
         
         st.markdown("---")
-        st.info("💡 관리자만 접근할 수 있는 페이지입니다")
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                    padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);
+                    text-align: center;">
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; margin: 0;">
+                💡 관리자만 접근할 수 있는 페이지입니다
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         st.stop()
     
     return True
@@ -146,7 +330,6 @@ def export_to_csv():
     """CSV로 내보내기"""
     questions = load_questions()
     if not questions:
-        st.warning("내보낼 질문이 없습니다")
         return None
     
     df = pd.DataFrame(questions)
@@ -168,10 +351,16 @@ def export_to_excel():
 
 # 관리자 인증 확인
 if check_admin():
-    # 헤더
+    # 헤더 - Liquid Glass 스타일
     st.markdown(f"""
-    <div style="background-color: {WOORI_BLUE}; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem;">
-        <h1 style="color: white; margin: 0; text-align: center;">🔐 관리자 페이지</h1>
+    <div style="background: linear-gradient(135deg, rgba(0, 76, 151, 0.3), rgba(0, 102, 204, 0.3)); 
+                backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+                padding: 2rem; border-radius: 20px; margin-bottom: 2rem;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);">
+        <h1 style="color: rgba(255, 255, 255, 0.95); margin: 0; text-align: center; font-weight: 700; font-size: 2.5rem; letter-spacing: -1px;">
+            🔐 관리자 페이지
+        </h1>
     </div>
     """, unsafe_allow_html=True)
     
@@ -194,7 +383,15 @@ if check_admin():
         st.header("📋 질문 관리")
         
         if not questions:
-            st.info("등록된 질문이 없습니다")
+            st.markdown("""
+            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                        padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);
+                        text-align: center;">
+                <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem; margin: 0;">
+                    등록된 질문이 없습니다
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             # 검색 및 필터
             col1, col2 = st.columns([3, 1])
@@ -230,8 +427,24 @@ if check_admin():
                         st.write(q['question'])
                     
                     with col2:
-                        if st.button("🗑️ 삭제", key=f"delete_{q['id']}", type="secondary", use_container_width=True):
-                            delete_question(q['id'])
+                        # 삭제 확인
+                        delete_key = f"delete_{q['id']}"
+                        confirm_key = f"confirm_delete_{q['id']}"
+                        
+                        if st.session_state.get(confirm_key, False):
+                            col_yes, col_no = st.columns(2)
+                            with col_yes:
+                                if st.button("✅ 확인", key=f"yes_{q['id']}", use_container_width=True):
+                                    delete_question(q['id'])
+                                    st.session_state[confirm_key] = False
+                            with col_no:
+                                if st.button("❌ 취소", key=f"no_{q['id']}", use_container_width=True):
+                                    st.session_state[confirm_key] = False
+                                    st.rerun()
+                        else:
+                            if st.button("🗑️ 삭제", key=delete_key, type="secondary", use_container_width=True):
+                                st.session_state[confirm_key] = True
+                                st.rerun()
                 
                 st.markdown("---")
     
@@ -239,8 +452,79 @@ if check_admin():
     with tab2:
         st.header("📊 통계 정보")
         
+        # 방문자 통계
+        if STATS_ENABLED:
+            try:
+                stats = load_stats()
+                
+                if stats:
+                    st.subheader("👥 방문자 통계")
+                    daily_stats = get_daily_stats(stats)
+                    all_time_stats = get_all_time_stats(stats)
+                    
+                    col1, col2, col3, col4 = st.columns(4)
+                    
+                    with col1:
+                        st.metric("현재 접속 중", f"{daily_stats.get('current_visitors', 0)}명")
+                    
+                    with col2:
+                        st.metric("오늘 방문자", f"{daily_stats.get('unique_visitors', 0)}명")
+                    
+                    with col3:
+                        st.metric("오늘 총 방문", f"{daily_stats.get('total_visits', 0)}회")
+                    
+                    with col4:
+                        st.metric("전체 방문자", f"{all_time_stats.get('total_unique_visitors', 0)}명")
+                    
+                    st.markdown("---")
+                    
+                    # 시간대별 접속 통계
+                    st.subheader("🕒 시간대별 접속 현황")
+                    time_stats = {}
+                    for stat in stats:
+                        try:
+                            last_visit_str = stat.get('last_visit', '')
+                            if last_visit_str:
+                                last_visit = datetime.strptime(last_visit_str, "%Y-%m-%d %H:%M:%S")
+                                hour = last_visit.hour
+                                time_range = f"{hour:02d}:00"
+                                time_stats[time_range] = time_stats.get(time_range, 0) + 1
+                        except:
+                            pass
+                    
+                    if time_stats:
+                        time_df = pd.DataFrame([
+                            {"시간대": k, "접속 수": v}
+                            for k, v in sorted(time_stats.items())
+                        ])
+                        st.bar_chart(time_df.set_index("시간대"))
+                    
+                    st.markdown("---")
+            except Exception as e:
+                st.warning(f"방문자 통계 로드 오류: {e}")
+        else:
+            st.markdown("""
+            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                        padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);
+                        text-align: center;">
+                <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; margin: 0;">
+                    ℹ️ 방문자 통계 기능을 사용할 수 없습니다
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # 질문 통계
+        st.subheader("📝 질문 통계")
         if not questions:
-            st.info("통계 데이터가 없습니다")
+            st.markdown("""
+            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                        padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.2);
+                        text-align: center;">
+                <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem; margin: 0;">
+                    질문 데이터가 없습니다
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
             col1, col2, col3, col4 = st.columns(4)
             
@@ -262,7 +546,7 @@ if check_admin():
             st.markdown("---")
             
             # 작성자별 통계
-            st.subheader("📝 작성자별 통계")
+            st.subheader("📊 작성자별 통계")
             author_stats = {}
             for q in questions:
                 author = q.get("name", "익명")
@@ -310,9 +594,25 @@ if check_admin():
         st.header("📥 데이터 내보내기")
         
         if not questions:
-            st.warning("내보낼 데이터가 없습니다")
+            st.markdown("""
+            <div style="background: rgba(255, 193, 7, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                        padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 193, 7, 0.3);
+                        text-align: center;">
+                <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.1rem; margin: 0;">
+                    내보낼 데이터가 없습니다
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.info(f"총 {len(questions)}개의 질문을 내보낼 수 있습니다")
+            st.markdown(f"""
+            <div style="background: rgba(0, 102, 204, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                        padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(0, 102, 204, 0.3);
+                        text-align: center; margin-bottom: 1.5rem;">
+                <p style="color: rgba(255, 255, 255, 0.95); font-size: 1.1rem; margin: 0;">
+                    총 {len(questions)}개의 질문을 내보낼 수 있습니다
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
             
             col1, col2 = st.columns(2)
             
@@ -357,30 +657,85 @@ if check_admin():
         
         st.subheader("📊 데이터 저장 상태")
         if USE_GSHEETS and conn_gsheet:
-            st.success("✅ 데이터 저장소 연결됨")
+            st.markdown("""
+            <div style="background: rgba(40, 167, 69, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(40, 167, 69, 0.3);
+                        text-align: center;">
+                <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0;">
+                    ✅ 데이터 저장소 연결됨
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         else:
-            st.info("ℹ️ 로컬 파일 모드")
+            st.markdown("""
+            <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2);
+                        text-align: center;">
+                <p style="color: rgba(255, 255, 255, 0.9); font-size: 1rem; margin: 0;">
+                    ℹ️ 로컬 파일 모드
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
         
         st.markdown("---")
         
         st.subheader("🔐 비밀번호 변경")
-        st.info("현재 비밀번호: `woori2024`")
-        st.warning("⚠️ 비밀번호를 변경하려면 코드를 수정하거나 Streamlit Cloud Secrets를 사용하세요")
+        st.markdown("""
+        <div style="background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.2);
+                    margin-bottom: 1rem;">
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 1rem; margin: 0;">
+                현재 비밀번호: <code style="background: rgba(0, 0, 0, 0.2); padding: 0.2rem 0.5rem; border-radius: 4px;">woori2024</code>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown("""
+        <div style="background: rgba(255, 193, 7, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.3);">
+            <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0;">
+                ⚠️ 비밀번호를 변경하려면 코드를 수정하거나 Streamlit Cloud Secrets를 사용하세요
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("---")
         
         st.subheader("🗑️ 전체 데이터 삭제")
-        st.error("⚠️ 주의: 이 작업은 되돌릴 수 없습니다!")
+        st.markdown("""
+        <div style="background: rgba(220, 53, 69, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(220, 53, 69, 0.3);
+                    margin-bottom: 1rem;">
+            <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0; font-weight: 600;">
+                ⚠️ 주의: 이 작업은 되돌릴 수 없습니다!
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
         
         if st.button("전체 질문 삭제", type="secondary"):
             if st.session_state.get("confirm_delete", False):
                 save_questions([])
                 st.session_state.confirm_delete = False
-                st.success("✅ 모든 질문이 삭제되었습니다")
+                st.markdown("""
+                <div style="background: rgba(40, 167, 69, 0.2); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                            padding: 1rem; border-radius: 12px; border: 1px solid rgba(40, 167, 69, 0.3);
+                            text-align: center; margin-top: 1rem;">
+                    <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0;">
+                        ✅ 모든 질문이 삭제되었습니다
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
                 st.rerun()
             else:
                 st.session_state.confirm_delete = True
-                st.warning("⚠️ 다시 클릭하면 삭제됩니다")
+                st.markdown("""
+                <div style="background: rgba(255, 193, 7, 0.15); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+                            padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.3);
+                            text-align: center; margin-top: 1rem;">
+                    <p style="color: rgba(255, 255, 255, 0.95); font-size: 1rem; margin: 0;">
+                        ⚠️ 다시 클릭하면 삭제됩니다
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
         
         if st.session_state.get("confirm_delete", False):
             if st.button("취소"):
