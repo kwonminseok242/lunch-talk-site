@@ -120,9 +120,10 @@ def init_db():
 def load_questions():
     """질문 데이터 로드 - Google Sheets 우선, 없으면 SQLite, 마지막으로 JSON"""
     # 1. Google Sheets 우선
-    if USE_GSHEETS and conn_gsheet and SPREADSHEET_URL:
+    if USE_GSHEETS and conn_gsheet:
         try:
-            df = conn_gsheet.read(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, ttl=0)
+            # Secrets에서 자동으로 spreadsheet를 읽도록 함
+            df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
             if df is not None and not df.empty:
                 questions = df.to_dict('records')
                 result = []
@@ -225,11 +226,8 @@ def save_questions(questions):
             # 빈 값 처리
             df = df.fillna('')
             
-            # Google Sheets에 저장
-            if SPREADSHEET_URL:
-                conn_gsheet.update(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, data=df)
-            else:
-                conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
+            # Google Sheets에 저장 - Secrets에서 자동으로 spreadsheet를 읽도록 함
+            conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
             st.cache_data.clear()
             # Google Sheets 저장 성공 시 SQLite에도 백업
             save_to_sqlite(questions)

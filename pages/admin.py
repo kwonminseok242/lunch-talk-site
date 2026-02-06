@@ -200,11 +200,8 @@ def save_questions(questions):
             # 빈 값 처리
             df = df.fillna('')
             
-            # Google Sheets에 저장
-            if SPREADSHEET_URL:
-                conn_gsheet.update(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, data=df)
-            else:
-                conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
+            # Google Sheets에 저장 - Secrets에서 자동으로 spreadsheet를 읽도록 함
+            conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
             st.cache_data.clear()
             save_to_sqlite(questions)
             return
@@ -964,8 +961,13 @@ if check_admin():
                 st.info("💡 Secrets에 다음 중 하나를 추가하세요:")
                 st.code("""
 [connections.gsheets]
-spreadsheet = "https://docs.google.com/spreadsheets/d/1lEauHDkNImWHV-TpGbqGoBxYpC8dE0MY3SMMBBo1z0k/edit"
-# 또는
+spreadsheet = "https://docs.google.com/spreadsheets/d/1lEauHDkNImWHV-TpGbqGoBxYpC8dE0MY3SMMBBo1z0k/edit?usp=sharing"
+worksheet = "questions"
+                """)
+                st.warning("⚠️ **중요**: URL에 반드시 `?usp=sharing`이 포함되어야 합니다!")
+                st.code("""
+# 또는 spreadsheet_id만 사용 (코드에서 자동으로 ?usp=sharing 추가)
+[connections.gsheets]
 spreadsheet_id = "1lEauHDkNImWHV-TpGbqGoBxYpC8dE0MY3SMMBBo1z0k"
 worksheet = "questions"
                 """)
@@ -979,39 +981,54 @@ worksheet = "questions"
             st.markdown("""
             `st-gsheets-connection`은 **공개(Public)로 설정된 시트**만 지원합니다.
             
+            **✅ 올바른 URL 형식:**
+            ```
+            https://docs.google.com/spreadsheets/d/.../edit?usp=sharing
+            ```
+            
+            **❌ 잘못된 URL 형식 (사용하면 안 됨):**
+            ```
+            https://docs.google.com/spreadsheets/d/.../edit?gid=0#gid=0
+            ```
+            
+            **⚠️ 중요: Google Sheets 공개 설정 필수!**
+            
             **Google Sheets를 공개로 설정하는 방법:**
-            1. Google Sheets에서 **"공유"** 버튼 클릭
-            2. **"링크가 있는 모든 사용자"** 선택
-            3. 권한을 **"편집자"**로 설정 (데이터 저장을 위해 필요)
-            4. **"완료"** 클릭
-            5. URL이 `https://docs.google.com/spreadsheets/d/.../edit?usp=sharing` 형식인지 확인
+            1. Google Sheets를 엽니다: [여기 클릭](https://docs.google.com/spreadsheets/d/1lEauHDkNImWHV-TpGbqGoBxYpC8dE0MY3SMMBBo1z0k/edit)
+            2. 오른쪽 상단의 **"공유"** 버튼 클릭
+            3. 공유 설정 창에서:
+               - **"링크가 있는 모든 사용자"** 선택
+               - 권한을 **"편집자"**로 설정 (데이터 저장을 위해 필요)
+               - **"완료"** 클릭
+            4. URL이 `?usp=sharing`으로 끝나는지 확인
             
-            **현재 URL 확인:**
-            - 올바른 형식: `.../edit?usp=sharing`
-            - 잘못된 형식: `.../edit?gid=0#gid=0` (공개 설정 안 됨)
-            
-            또는 비공개 시트를 사용하려면 Service Account 인증이 필요합니다.
+            **공개 설정 확인 방법:**
+            - 시크릿 모드(시크릿 창)에서 Google Sheets URL을 열어보세요
+            - 로그인 없이 열리면 공개 설정이 완료된 것입니다
+            - 로그인 화면이 나오면 아직 공개 설정이 안 된 것입니다
             """)
             
-            # 현재 URL 형식 확인
-            if SPREADSHEET_URL:
-                if "?usp=sharing" in SPREADSHEET_URL:
-                    st.success("✅ URL 형식이 올바릅니다 (`?usp=sharing` 포함)")
-                elif "?gid=" in SPREADSHEET_URL or "#gid=" in SPREADSHEET_URL:
-                    st.warning("⚠️ URL에 `?usp=sharing`이 없습니다. 공개 설정을 확인하세요.")
-                else:
-                    st.info("ℹ️ URL 형식을 확인하세요.")
+            # 공개 설정 확인 안내
+            st.markdown("---")
+            st.subheader("🔍 공개 설정 확인")
+            st.markdown("""
+            아래 버튼을 클릭하여 공개 설정이 제대로 되었는지 확인하세요:
+            """)
+            st.link_button(
+                "📋 Google Sheets 열기 (시크릿 모드에서 테스트)",
+                "https://docs.google.com/spreadsheets/d/1lEauHDkNImWHV-TpGbqGoBxYpC8dE0MY3SMMBBo1z0k/edit",
+                use_container_width=True
+            )
+            st.info("💡 시크릿 모드에서 위 링크를 열었을 때 로그인 없이 바로 열리면 공개 설정이 완료된 것입니다.")
         except Exception as e:
             st.error(f"Secrets 확인 오류: {e}")
         
         if USE_GSHEETS and conn_gsheet:
             if st.button("연결 테스트", key="test_gsheets"):
                 try:
-                    # 읽기 테스트
-                    if SPREADSHEET_URL:
-                        df_read = conn_gsheet.read(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, ttl=0)
-                    else:
-                        df_read = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+                    # 읽기 테스트 - Secrets에서 자동으로 spreadsheet를 읽도록 함
+                    # spreadsheet 파라미터를 명시적으로 전달하지 않으면 Secrets의 설정을 사용
+                    df_read = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
                     st.success(f"✅ 읽기 성공: {len(df_read) if df_read is not None and not df_read.empty else 0}개 행")
                     
                     # 쓰기 테스트 (테스트 데이터)
@@ -1031,10 +1048,8 @@ worksheet = "questions"
                     else:
                         combined_df = test_data
                     
-                    if SPREADSHEET_URL:
-                        conn_gsheet.update(spreadsheet=SPREADSHEET_URL, worksheet=WORKSHEET_NAME, data=combined_df)
-                    else:
-                        conn_gsheet.update(worksheet=WORKSHEET_NAME, data=combined_df)
+                    # Secrets에서 자동으로 spreadsheet를 읽도록 함
+                    conn_gsheet.update(worksheet=WORKSHEET_NAME, data=combined_df)
                     st.success("✅ 쓰기 성공: 테스트 데이터가 저장되었습니다")
                     st.info("💡 Google Sheets를 새로고침하여 확인하세요. 테스트 데이터는 나중에 삭제하세요.")
                 except Exception as e:
