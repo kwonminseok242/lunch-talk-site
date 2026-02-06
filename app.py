@@ -12,10 +12,16 @@ from pathlib import Path
 
 # Google Sheets 연동 (선택사항)
 try:
-    from streamlit_gsheets import GSheetsConnection
+    # st-gsheets-connection 패키지 사용 (Streamlit Cloud 호환)
+    from st_gsheets_connection import GSheetsConnection
     USE_GSHEETS = True
 except ImportError:
-    USE_GSHEETS = False
+    try:
+        # 대체 패키지명 시도
+        from streamlit_gsheets import GSheetsConnection
+        USE_GSHEETS = True
+    except ImportError:
+        USE_GSHEETS = False
 
 # 페이지 설정
 st.set_page_config(
@@ -35,6 +41,7 @@ DATA_FILE = "questions.json"
 WORKSHEET_NAME = "questions"
 
 # Google Sheets 연결 (설정되어 있으면 사용)
+conn_gsheet = None
 if USE_GSHEETS:
     try:
         conn_gsheet = st.connection("gsheets", type=GSheetsConnection)
@@ -42,10 +49,11 @@ if USE_GSHEETS:
     except Exception:
         # Google Sheets가 설정되지 않았으면 조용히 로컬 파일 사용
         USE_GSHEETS = False
+        conn_gsheet = None
 
 def load_questions():
     """질문 데이터 로드 - Google Sheets 우선, 없으면 로컬 파일"""
-    if USE_GSHEETS:
+    if USE_GSHEETS and conn_gsheet:
         try:
             df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
             if df is not None and not df.empty:
@@ -80,7 +88,7 @@ def load_questions():
 
 def save_questions(questions):
     """질문 데이터 저장 - Google Sheets 우선, 없으면 로컬 파일"""
-    if USE_GSHEETS and questions:
+    if USE_GSHEETS and conn_gsheet and questions:
         try:
             # 리스트를 DataFrame으로 변환
             df = pd.DataFrame(questions)

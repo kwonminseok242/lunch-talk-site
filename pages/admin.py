@@ -15,10 +15,14 @@ from pathlib import Path
 
 # Google Sheets 연동
 try:
-    from streamlit_gsheets import GSheetsConnection
+    from st_gsheets_connection import GSheetsConnection
     USE_GSHEETS = True
 except ImportError:
-    USE_GSHEETS = False
+    try:
+        from streamlit_gsheets import GSheetsConnection
+        USE_GSHEETS = True
+    except ImportError:
+        USE_GSHEETS = False
 
 # 컬러 상수
 WOORI_BLUE = "#004C97"
@@ -29,16 +33,18 @@ DATA_FILE = "../questions.json"
 WORKSHEET_NAME = "questions"
 
 # Google Sheets 연결
+conn_gsheet = None
 if USE_GSHEETS:
     try:
         conn_gsheet = st.connection("gsheets", type=GSheetsConnection)
         USE_GSHEETS = True
     except:
         USE_GSHEETS = False
+        conn_gsheet = None
 
 def load_questions():
     """질문 데이터 로드"""
-    if USE_GSHEETS:
+    if USE_GSHEETS and conn_gsheet:
         try:
             df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
             if df is not None and not df.empty:
@@ -68,7 +74,7 @@ def load_questions():
 
 def save_questions(questions):
     """질문 데이터 저장"""
-    if USE_GSHEETS and questions:
+    if USE_GSHEETS and conn_gsheet and questions:
         try:
             df = pd.DataFrame(questions)
             columns = ['id', 'name', 'question', 'timestamp', 'likes']
