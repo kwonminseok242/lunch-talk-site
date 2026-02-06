@@ -67,14 +67,23 @@ if USE_GSHEETS:
             
             # spreadsheet URL이 직접 있는 경우
             if "spreadsheet" in gsheets_config:
-                SPREADSHEET_URL = gsheets_config["spreadsheet"]
+                url = gsheets_config["spreadsheet"]
+                # URL에 ?usp=sharing이 없으면 추가 (공개 설정 확인)
+                if "?usp=sharing" not in url and "/edit" in url:
+                    SPREADSHEET_URL = url.replace("/edit", "/edit?usp=sharing")
+                else:
+                    SPREADSHEET_URL = url
             # spreadsheet_id가 있는 경우 URL로 변환
             elif "spreadsheet_id" in gsheets_config:
                 spreadsheet_id = gsheets_config["spreadsheet_id"]
-                SPREADSHEET_URL = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
+                SPREADSHEET_URL = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit?usp=sharing"
             # spreadsheet_url이 있는 경우
             elif "spreadsheet_url" in gsheets_config:
-                SPREADSHEET_URL = gsheets_config["spreadsheet_url"]
+                url = gsheets_config["spreadsheet_url"]
+                if "?usp=sharing" not in url and "/edit" in url:
+                    SPREADSHEET_URL = url.replace("/edit", "/edit?usp=sharing")
+                else:
+                    SPREADSHEET_URL = url
             
             if SPREADSHEET_URL:
                 conn_gsheet = st.connection("gsheets", type=GSheetsConnection)

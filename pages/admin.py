@@ -88,14 +88,23 @@ if USE_GSHEETS:
             
             # spreadsheet URL이 직접 있는 경우
             if "spreadsheet" in gsheets_config:
-                SPREADSHEET_URL = gsheets_config["spreadsheet"]
+                url = gsheets_config["spreadsheet"]
+                # URL에 ?usp=sharing이 없으면 추가 (공개 설정 확인)
+                if "?usp=sharing" not in url and "/edit" in url:
+                    SPREADSHEET_URL = url.replace("/edit", "/edit?usp=sharing")
+                else:
+                    SPREADSHEET_URL = url
             # spreadsheet_id가 있는 경우 URL로 변환
             elif "spreadsheet_id" in gsheets_config:
                 spreadsheet_id = gsheets_config["spreadsheet_id"]
-                SPREADSHEET_URL = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit"
+                SPREADSHEET_URL = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}/edit?usp=sharing"
             # spreadsheet_url이 있는 경우
             elif "spreadsheet_url" in gsheets_config:
-                SPREADSHEET_URL = gsheets_config["spreadsheet_url"]
+                url = gsheets_config["spreadsheet_url"]
+                if "?usp=sharing" not in url and "/edit" in url:
+                    SPREADSHEET_URL = url.replace("/edit", "/edit?usp=sharing")
+                else:
+                    SPREADSHEET_URL = url
             
             if SPREADSHEET_URL:
                 conn_gsheet = st.connection("gsheets", type=GSheetsConnection)
@@ -963,6 +972,35 @@ worksheet = "questions"
             
             if worksheet_name:
                 st.info(f"📄 워크시트 이름: `{worksheet_name}`")
+            
+            # 공개 설정 안내
+            st.markdown("---")
+            st.warning("⚠️ **중요: Google Sheets 공개 설정 필요**")
+            st.markdown("""
+            `st-gsheets-connection`은 **공개(Public)로 설정된 시트**만 지원합니다.
+            
+            **Google Sheets를 공개로 설정하는 방법:**
+            1. Google Sheets에서 **"공유"** 버튼 클릭
+            2. **"링크가 있는 모든 사용자"** 선택
+            3. 권한을 **"편집자"**로 설정 (데이터 저장을 위해 필요)
+            4. **"완료"** 클릭
+            5. URL이 `https://docs.google.com/spreadsheets/d/.../edit?usp=sharing` 형식인지 확인
+            
+            **현재 URL 확인:**
+            - 올바른 형식: `.../edit?usp=sharing`
+            - 잘못된 형식: `.../edit?gid=0#gid=0` (공개 설정 안 됨)
+            
+            또는 비공개 시트를 사용하려면 Service Account 인증이 필요합니다.
+            """)
+            
+            # 현재 URL 형식 확인
+            if SPREADSHEET_URL:
+                if "?usp=sharing" in SPREADSHEET_URL:
+                    st.success("✅ URL 형식이 올바릅니다 (`?usp=sharing` 포함)")
+                elif "?gid=" in SPREADSHEET_URL or "#gid=" in SPREADSHEET_URL:
+                    st.warning("⚠️ URL에 `?usp=sharing`이 없습니다. 공개 설정을 확인하세요.")
+                else:
+                    st.info("ℹ️ URL 형식을 확인하세요.")
         except Exception as e:
             st.error(f"Secrets 확인 오류: {e}")
         
