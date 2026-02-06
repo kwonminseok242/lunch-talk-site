@@ -6,8 +6,16 @@
 import streamlit as st
 import json
 import os
+import pandas as pd
 from datetime import datetime
 from pathlib import Path
+
+# Google Sheets 연동 (선택사항)
+try:
+    from streamlit_gsheets import GSheetsConnection
+    USE_GSHEETS = True
+except ImportError:
+    USE_GSHEETS = False
 
 # 페이지 설정
 st.set_page_config(
@@ -24,18 +32,74 @@ WOORI_WHITE = "#FFFFFF"
 
 # 데이터 파일 경로
 DATA_FILE = "questions.json"
+WORKSHEET_NAME = "questions"
+
+# Google Sheets 연결 (설정되어 있으면 사용)
+if USE_GSHEETS:
+    try:
+        conn_gsheet = st.connection("gsheets", type=GSheetsConnection)
+        USE_GSHEETS = True
+    except Exception:
+        # Google Sheets가 설정되지 않았으면 조용히 로컬 파일 사용
+        USE_GSHEETS = False
 
 def load_questions():
-    """질문 데이터 로드"""
+    """질문 데이터 로드 - Google Sheets 우선, 없으면 로컬 파일"""
+    if USE_GSHEETS:
+        try:
+            df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
+            if df is not None and not df.empty:
+                # 헤더 행 제거 (첫 번째 행이 헤더인 경우)
+                if len(df) > 0:
+                    # DataFrame을 리스트로 변환
+                    questions = df.to_dict('records')
+                    # 숫자 타입 변환 및 필터링
+                    result = []
+                    for q in questions:
+                        # 필수 필드 확인
+                        if 'question' in q and pd.notna(q.get('question')):
+                            q['id'] = int(q.get('id', 0)) if pd.notna(q.get('id')) else 0
+                            q['likes'] = int(q.get('likes', 0)) if pd.notna(q.get('likes')) else 0
+                            q['name'] = str(q.get('name', '익명')) if pd.notna(q.get('name')) else '익명'
+                            q['question'] = str(q['question'])
+                            q['timestamp'] = str(q.get('timestamp', '')) if pd.notna(q.get('timestamp')) else ''
+                            result.append(q)
+                    return result
+        except Exception as e:
+            # 에러가 발생해도 계속 진행 (로컬 파일 사용)
+            pass
+    
+    # 로컬 파일 사용
     if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return []
     return []
 
 def save_questions(questions):
-    """질문 데이터 저장"""
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(questions, f, ensure_ascii=False, indent=2)
+    """질문 데이터 저장 - Google Sheets 우선, 없으면 로컬 파일"""
+    if USE_GSHEETS and questions:
+        try:
+            # 리스트를 DataFrame으로 변환
+            df = pd.DataFrame(questions)
+            # 컬럼 순서 지정
+            columns = ['id', 'name', 'question', 'timestamp', 'likes']
+            df = df[columns] if all(col in df.columns for col in columns) else df
+            conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
+            st.cache_data.clear()
+            return
+        except Exception as e:
+            # 에러 메시지는 표시하지 않고 로컬 파일로 저장
+            pass
+    
+    # 로컬 파일 저장
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(questions, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        st.error(f"파일 저장 오류: {e}")
 
 def add_question(name, question):
     """새 질문 추가"""
@@ -142,8 +206,18 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+# 관리자 페이지 링크 (사이드바에 추가)
+
 # 사이드바 - 질문 작성 및 필터
 with st.sidebar:
+    # Google Sheets 연결 상태 표시
+    if USE_GSHEETS:
+        st.success("✅ Google Sheets 연동됨\n모든 사용자가 같은 질문을 볼 수 있습니다")
+    else:
+        st.info("ℹ️ 로컬 파일 모드\nGoogle Sheets 연동 방법은 README 참고")
+    
+    st.markdown("---")
+    
     st.markdown(f"""
     <div style="background-color: {WOORI_BLUE}; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem;">
         <h2 style="color: white; margin: 0; text-align: center;">📝 질문 작성</h2>
@@ -175,6 +249,13 @@ with st.sidebar:
             st.rerun()
         else:
             st.error("⚠️ 질문 내용을 입력해주세요.")
+    
+    st.markdown("---")
+    
+    # 관리자 페이지 링크
+    st.markdown("### 🔐 관리자")
+    if st.button("관리자 페이지", use_container_width=True, type="secondary"):
+        st.switch_page("pages/admin.py")
     
     st.markdown("---")
     
