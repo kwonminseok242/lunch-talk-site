@@ -431,7 +431,7 @@ st.markdown("""
             margin-bottom: 1rem;">
     <h1 style="margin-bottom: 0.5rem;">💬 현직자 런치톡 질문 수집</h1>
     <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin: 0;">
-        함께 수강하는 분들의 질문을 모아서 현직자분께 전달하겠습니다
+        [질문 취합] 현직자 문의 사항을 남겨주세요. ※ 원활한 진행을 위해 실명 질문을 우선 채택하며, 시간 제한으로 인해 모든 질문이 전달되지 않을 수 있습니다.
     </p>
 </div>
 """, unsafe_allow_html=True)
