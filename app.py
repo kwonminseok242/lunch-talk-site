@@ -471,35 +471,6 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# 데이터 저장 상태 표시 및 경고
-storage_status = None
-if USE_GSHEETS and conn_gsheet:
-    storage_status = "google_sheets"
-elif DB_FILE.exists():
-    storage_status = "sqlite"
-else:
-    storage_status = "json"
-
-with st.expander("ℹ️ 데이터 저장 정보", expanded=False):
-    if storage_status == "google_sheets":
-        st.success("✅ **Google Sheets**에 저장 중 (영구 저장)")
-        st.info(f"워크시트: `{WORKSHEET_NAME}`")
-        st.caption("💡 Google Sheets는 재시작 후에도 데이터가 유지됩니다.")
-    elif storage_status == "sqlite":
-        st.success("✅ **SQLite 데이터베이스**에 저장 중 (영구 저장)")
-        st.info(f"데이터베이스: `{DB_FILE.name}`")
-        st.caption("💡 SQLite는 재시작 후에도 데이터가 유지됩니다.")
-        st.warning("⚠️ **권장**: Streamlit Cloud에서는 Google Sheets 연동을 권장합니다.")
-    else:
-        st.warning("⚠️ **JSON 파일**에 저장 중 (임시 저장)")
-        st.info(f"파일 경로: `{DATA_FILE}`")
-        st.error("🚨 **주의**: Streamlit Cloud에서 재시작 시 데이터가 사라질 수 있습니다!")
-        st.info("💡 **해결 방법**: Google Sheets를 연동하거나 SQLite를 사용하세요.")
-    
-    # 현재 저장된 질문 수 표시
-    questions_count = len(load_questions())
-    st.info(f"현재 저장된 질문 수: **{questions_count}개**")
-
 st.markdown("---")
 
 # 본문을 2열로 분리: 좌측 폼, 우측 목록

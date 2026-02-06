@@ -723,26 +723,61 @@ if check_admin():
         st.header("⚙️ 관리자 설정")
         
         st.subheader("📊 데이터 저장 상태")
+        
+        # 저장 상태 확인
+        storage_status = None
         if USE_GSHEETS and conn_gsheet:
+            storage_status = "google_sheets"
+        elif DB_FILE.exists():
+            storage_status = "sqlite"
+        else:
+            storage_status = "json"
+        
+        # 저장 상태 표시
+        if storage_status == "google_sheets":
             st.markdown("""
             <div style="background: rgba(40, 167, 69, 0.15); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
                         padding: 1rem; border-radius: 12px; border: 1px solid rgba(40, 167, 69, 0.2);
-                        text-align: center;">
-                <p style="color: #ffffff; font-size: 1rem; margin: 0;">
-                    ✅ 데이터 저장소 연결됨
+                        margin-bottom: 1rem;">
+                <p style="color: #ffffff; font-size: 1rem; margin: 0; font-weight: 600;">
+                    ✅ Google Sheets에 저장 중 (영구 저장)
                 </p>
             </div>
             """, unsafe_allow_html=True)
+            st.info(f"📋 워크시트: `{WORKSHEET_NAME}`")
+            st.caption("💡 Google Sheets는 재시작 후에도 데이터가 유지됩니다.")
+        elif storage_status == "sqlite":
+            st.markdown("""
+            <div style="background: rgba(40, 167, 69, 0.15); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(40, 167, 69, 0.2);
+                        margin-bottom: 1rem;">
+                <p style="color: #ffffff; font-size: 1rem; margin: 0; font-weight: 600;">
+                    ✅ SQLite 데이터베이스에 저장 중 (영구 저장)
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            st.info(f"💾 데이터베이스: `{DB_FILE.name}`")
+            st.info(f"📁 파일 경로: `{DB_FILE}`")
+            st.caption("💡 SQLite는 재시작 후에도 데이터가 유지됩니다.")
+            st.warning("⚠️ **권장**: Streamlit Cloud에서는 Google Sheets 연동을 권장합니다.")
         else:
             st.markdown("""
-            <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15);
-                        text-align: center;">
-                <p style="color: rgba(255, 255, 255, 0.9); font-size: 1rem; margin: 0;">
-                    ℹ️ 로컬 파일 모드
+            <div style="background: rgba(255, 193, 7, 0.15); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+                        padding: 1rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.2);
+                        margin-bottom: 1rem;">
+                <p style="color: #ffffff; font-size: 1rem; margin: 0; font-weight: 600;">
+                    ⚠️ JSON 파일에 저장 중 (임시 저장)
                 </p>
             </div>
             """, unsafe_allow_html=True)
+            st.info(f"📁 파일 경로: `{DATA_FILE}`")
+            st.error("🚨 **주의**: Streamlit Cloud에서 재시작 시 데이터가 사라질 수 있습니다!")
+            st.info("💡 **해결 방법**: Google Sheets를 연동하거나 SQLite를 사용하세요.")
+        
+        # 현재 저장된 질문 수 표시
+        questions_count = len(load_questions())
+        st.markdown("---")
+        st.metric("현재 저장된 질문 수", f"{questions_count}개")
         
         st.markdown("---")
         
