@@ -1096,10 +1096,10 @@ worksheet = "questions"
                             st.success(f"✅ 읽기 성공 (CSV Export URL 사용): {len(df_read) if df_read is not None and not df_read.empty else 0}개 행")
                         else:
                             st.error("❌ spreadsheet_id를 추출할 수 없습니다.")
-                            return
+                            st.stop()
                     else:
                         st.error("❌ Secrets에 spreadsheet URL이 없습니다.")
-                        return
+                        st.stop()
                     
                     # 쓰기 테스트 (테스트 데이터)
                     test_data = pd.DataFrame([{
