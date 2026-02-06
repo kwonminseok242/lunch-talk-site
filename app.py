@@ -7,6 +7,7 @@ import streamlit as st
 import json
 import os
 import pandas as pd
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 
@@ -50,8 +51,9 @@ if 'new_question_id' not in st.session_state:
 WOORI_BLUE = "#004C97"
 WOORI_LIGHT_BLUE = "#0066CC"
 
-# 데이터 파일 경로
-DATA_FILE = "questions.json"
+# 데이터 파일 경로 (절대 경로로 통일)
+DATA_FILE = Path(__file__).parent / "questions.json"
+DB_FILE = Path(__file__).parent / "questions.db"
 WORKSHEET_NAME = "questions"
 
 # Google Sheets 연결 (설정되어 있으면 사용)
@@ -64,8 +66,25 @@ if USE_GSHEETS:
         USE_GSHEETS = False
         conn_gsheet = None
 
+def init_db():
+    """SQLite 데이터베이스 초기화"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS questions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            question TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            likes INTEGER DEFAULT 0
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
 def load_questions():
-    """질문 데이터 로드 - Google Sheets 우선, 없으면 로컬 파일"""
+    """질문 데이터 로드 - Google Sheets 우선, 없으면 SQLite, 마지막으로 JSON"""
+    # 1. Google Sheets 우선
     if USE_GSHEETS and conn_gsheet:
         try:
             df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
@@ -80,21 +99,80 @@ def load_questions():
                         q['question'] = str(q['question'])
                         q['timestamp'] = str(q.get('timestamp', '')) if pd.notna(q.get('timestamp')) else ''
                         result.append(q)
+                # Google Sheets에서 로드한 데이터를 SQLite에도 백업
+                if result:
+                    save_to_sqlite(result)
                 return result
         except Exception:
             pass
     
-    # 로컬 파일 사용
-    if os.path.exists(DATA_FILE):
+    # 2. SQLite 사용 (영구 저장)
+    try:
+        init_db()
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM questions ORDER BY id')
+        rows = cursor.fetchall()
+        conn.close()
+        
+        if rows:
+            questions = []
+            for row in rows:
+                questions.append({
+                    'id': row[0],
+                    'name': row[1],
+                    'question': row[2],
+                    'timestamp': row[3],
+                    'likes': row[4] if len(row) > 4 else 0
+                })
+            return questions
+    except Exception:
+        pass
+    
+    # 3. JSON 파일 사용 (마이그레이션용)
+    if DATA_FILE.exists():
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                questions = json.load(f)
+                # JSON 데이터를 SQLite로 마이그레이션
+                if questions:
+                    save_to_sqlite(questions)
+                return questions
         except:
-            return []
+            pass
+    
     return []
 
+def save_to_sqlite(questions):
+    """SQLite에 데이터 저장"""
+    try:
+        init_db()
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        
+        # 기존 데이터 삭제 후 재삽입
+        cursor.execute('DELETE FROM questions')
+        
+        for q in questions:
+            cursor.execute('''
+                INSERT INTO questions (id, name, question, timestamp, likes)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (
+                q.get('id', 0),
+                q.get('name', '익명'),
+                q.get('question', ''),
+                q.get('timestamp', ''),
+                q.get('likes', 0)
+            ))
+        
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        st.error(f"SQLite 저장 오류: {e}")
+
 def save_questions(questions):
-    """질문 데이터 저장 - Google Sheets 우선, 없으면 로컬 파일"""
+    """질문 데이터 저장 - Google Sheets 우선, SQLite 백업, JSON 마지막"""
+    # 1. Google Sheets 저장 (우선)
     if USE_GSHEETS and conn_gsheet and questions:
         try:
             df = pd.DataFrame(questions)
@@ -102,11 +180,26 @@ def save_questions(questions):
             df = df[columns] if all(col in df.columns for col in columns) else df
             conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
             st.cache_data.clear()
+            # Google Sheets 저장 성공 시 SQLite에도 백업
+            save_to_sqlite(questions)
             return
         except Exception:
             pass
     
-    # 로컬 파일 저장
+    # 2. SQLite 저장 (영구 저장)
+    try:
+        save_to_sqlite(questions)
+        # SQLite 저장 성공 시 JSON에도 백업 (호환성)
+        try:
+            with open(DATA_FILE, "w", encoding="utf-8") as f:
+                json.dump(questions, f, ensure_ascii=False, indent=2)
+        except:
+            pass
+        return
+    except Exception as e:
+        st.error(f"데이터 저장 오류: {e}")
+    
+    # 3. JSON 파일 저장 (최후의 수단)
     try:
         with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(questions, f, ensure_ascii=False, indent=2)
@@ -377,6 +470,35 @@ st.markdown(f"""
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# 데이터 저장 상태 표시 및 경고
+storage_status = None
+if USE_GSHEETS and conn_gsheet:
+    storage_status = "google_sheets"
+elif DB_FILE.exists():
+    storage_status = "sqlite"
+else:
+    storage_status = "json"
+
+with st.expander("ℹ️ 데이터 저장 정보", expanded=False):
+    if storage_status == "google_sheets":
+        st.success("✅ **Google Sheets**에 저장 중 (영구 저장)")
+        st.info(f"워크시트: `{WORKSHEET_NAME}`")
+        st.caption("💡 Google Sheets는 재시작 후에도 데이터가 유지됩니다.")
+    elif storage_status == "sqlite":
+        st.success("✅ **SQLite 데이터베이스**에 저장 중 (영구 저장)")
+        st.info(f"데이터베이스: `{DB_FILE.name}`")
+        st.caption("💡 SQLite는 재시작 후에도 데이터가 유지됩니다.")
+        st.warning("⚠️ **권장**: Streamlit Cloud에서는 Google Sheets 연동을 권장합니다.")
+    else:
+        st.warning("⚠️ **JSON 파일**에 저장 중 (임시 저장)")
+        st.info(f"파일 경로: `{DATA_FILE}`")
+        st.error("🚨 **주의**: Streamlit Cloud에서 재시작 시 데이터가 사라질 수 있습니다!")
+        st.info("💡 **해결 방법**: Google Sheets를 연동하거나 SQLite를 사용하세요.")
+    
+    # 현재 저장된 질문 수 표시
+    questions_count = len(load_questions())
+    st.info(f"현재 저장된 질문 수: **{questions_count}개**")
 
 st.markdown("---")
 

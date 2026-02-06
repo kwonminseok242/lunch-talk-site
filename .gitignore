@@ -11,6 +11,8 @@ ENV/
 
 # 데이터 파일
 questions.json
+questions.db
+stats.json
 
 # IDE
 .vscode/

@@ -7,6 +7,7 @@ import streamlit as st
 import json
 import os
 import pandas as pd
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 
@@ -32,9 +33,49 @@ except ImportError:
 WOORI_BLUE = "#004C97"
 WOORI_LIGHT_BLUE = "#0066CC"
 
-# 데이터 파일 경로
-DATA_FILE = "../questions.json"
+# 데이터 파일 경로 (절대 경로로 통일)
+DATA_FILE = Path(__file__).parent.parent / "questions.json"
+DB_FILE = Path(__file__).parent.parent / "questions.db"
 WORKSHEET_NAME = "questions"
+
+def init_db():
+    """SQLite 데이터베이스 초기화"""
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS questions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            question TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            likes INTEGER DEFAULT 0
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+def save_to_sqlite(questions):
+    """SQLite에 데이터 저장"""
+    try:
+        init_db()
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute('DELETE FROM questions')
+        for q in questions:
+            cursor.execute('''
+                INSERT INTO questions (id, name, question, timestamp, likes)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (
+                q.get('id', 0),
+                q.get('name', '익명'),
+                q.get('question', ''),
+                q.get('timestamp', ''),
+                q.get('likes', 0)
+            ))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        st.error(f"SQLite 저장 오류: {e}")
 
 # Google Sheets 연결
 conn_gsheet = None
@@ -47,7 +88,8 @@ if USE_GSHEETS:
         conn_gsheet = None
 
 def load_questions():
-    """질문 데이터 로드"""
+    """질문 데이터 로드 - Google Sheets 우선, 없으면 SQLite, 마지막으로 JSON"""
+    # 1. Google Sheets 우선
     if USE_GSHEETS and conn_gsheet:
         try:
             df = conn_gsheet.read(worksheet=WORKSHEET_NAME, ttl=0)
@@ -62,22 +104,51 @@ def load_questions():
                         q['question'] = str(q['question'])
                         q['timestamp'] = str(q.get('timestamp', '')) if pd.notna(q.get('timestamp')) else ''
                         result.append(q)
+                if result:
+                    save_to_sqlite(result)
                 return result
         except:
             pass
     
-    # 로컬 파일 사용
-    file_path = Path(__file__).parent.parent / DATA_FILE
-    if file_path.exists():
+    # 2. SQLite 사용 (영구 저장)
+    try:
+        init_db()
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM questions ORDER BY id')
+        rows = cursor.fetchall()
+        conn.close()
+        
+        if rows:
+            questions = []
+            for row in rows:
+                questions.append({
+                    'id': row[0],
+                    'name': row[1],
+                    'question': row[2],
+                    'timestamp': row[3],
+                    'likes': row[4] if len(row) > 4 else 0
+                })
+            return questions
+    except:
+        pass
+    
+    # 3. JSON 파일 사용 (마이그레이션용)
+    if DATA_FILE.exists():
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                return json.load(f)
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                questions = json.load(f)
+                if questions:
+                    save_to_sqlite(questions)
+                return questions
         except:
-            return []
+            pass
+    
     return []
 
 def save_questions(questions):
-    """질문 데이터 저장"""
+    """질문 데이터 저장 - Google Sheets 우선, SQLite 백업, JSON 마지막"""
+    # 1. Google Sheets 저장 (우선)
     if USE_GSHEETS and conn_gsheet and questions:
         try:
             df = pd.DataFrame(questions)
@@ -85,14 +156,26 @@ def save_questions(questions):
             df = df[columns] if all(col in df.columns for col in columns) else df
             conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
             st.cache_data.clear()
+            save_to_sqlite(questions)
             return
         except:
             pass
     
-    # 로컬 파일 저장
-    file_path = Path(__file__).parent.parent / DATA_FILE
+    # 2. SQLite 저장 (영구 저장)
     try:
-        with open(file_path, "w", encoding="utf-8") as f:
+        save_to_sqlite(questions)
+        try:
+            with open(DATA_FILE, "w", encoding="utf-8") as f:
+                json.dump(questions, f, ensure_ascii=False, indent=2)
+        except:
+            pass
+        return
+    except Exception as e:
+        st.error(f"데이터 저장 오류: {e}")
+    
+    # 3. JSON 파일 저장 (최후의 수단)
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
             json.dump(questions, f, ensure_ascii=False, indent=2)
     except Exception as e:
         st.error(f"파일 저장 오류: {e}")
