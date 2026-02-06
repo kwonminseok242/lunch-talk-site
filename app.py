@@ -225,7 +225,7 @@ def save_to_sqlite(questions):
 
 def save_questions(questions):
     """질문 데이터 저장 - Google Sheets 우선, SQLite 백업, JSON 마지막"""
-    # 1. Google Sheets 저장 (우선)
+    # 1. Google Sheets 저장 (우선) - 쓰기는 인증이 필요하므로 시도만 함
     if USE_GSHEETS and conn_gsheet and questions:
         try:
             df = pd.DataFrame(questions)
@@ -243,8 +243,16 @@ def save_questions(questions):
             # 빈 값 처리
             df = df.fillna('')
             
-            # Google Sheets에 저장 - Secrets에서 자동으로 spreadsheet를 읽도록 함
-            conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
+            # Google Sheets에 저장 시도
+            # 주의: 공개 시트의 경우 Service Account 인증이 필요할 수 있습니다
+            gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+            spreadsheet_url = gsheets_config.get("spreadsheet", "")
+            
+            if spreadsheet_url:
+                conn_gsheet.update(spreadsheet=spreadsheet_url, worksheet=WORKSHEET_NAME, data=df)
+            else:
+                conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
+            
             st.cache_data.clear()
             # Google Sheets 저장 성공 시 SQLite에도 백업
             save_to_sqlite(questions)
@@ -255,7 +263,7 @@ def save_questions(questions):
             error_msg = f"Google Sheets 저장 오류: {str(e)}\n{traceback.format_exc()}"
             # 관리자 페이지에서만 에러 표시
             if 'admin_authenticated' in st.session_state and st.session_state.get('admin_authenticated', False):
-                st.error(error_msg)
+                st.warning(f"⚠️ Google Sheets 저장 실패 (인증 필요할 수 있음). SQLite에 저장합니다.\n{str(e)}")
             # 실패 시 SQLite로 대체 저장
             pass
     

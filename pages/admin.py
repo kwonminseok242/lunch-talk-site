@@ -218,8 +218,16 @@ def save_questions(questions):
             # 빈 값 처리
             df = df.fillna('')
             
-            # Google Sheets에 저장 - Secrets에서 자동으로 spreadsheet를 읽도록 함
-            conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
+            # Google Sheets에 저장 시도
+            # 주의: 공개 시트의 경우 Service Account 인증이 필요할 수 있습니다
+            gsheets_config = st.secrets.get("connections", {}).get("gsheets", {})
+            spreadsheet_url = gsheets_config.get("spreadsheet", "")
+            
+            if spreadsheet_url:
+                conn_gsheet.update(spreadsheet=spreadsheet_url, worksheet=WORKSHEET_NAME, data=df)
+            else:
+                conn_gsheet.update(worksheet=WORKSHEET_NAME, data=df)
+            
             st.cache_data.clear()
             save_to_sqlite(questions)
             return
