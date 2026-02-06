@@ -283,14 +283,26 @@ st.markdown(f"""
         -webkit-backdrop-filter: blur(20px);
     }}
     
-    /* 메트릭 스타일 */
+    /* 메트릭 스타일 - 레이블 명확하게 */
+    [data-testid="stMetricContainer"] {{
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        padding: 1rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }}
+    
     [data-testid="stMetricValue"] {{
         color: #ffffff;
         font-weight: 700;
+        font-size: 1.5rem;
     }}
     
     [data-testid="stMetricLabel"] {{
-        color: rgba(255, 255, 255, 0.7);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 0.9rem;
+        font-weight: 500;
     }}
     
     /* 빈 상태 카드 - 작게 */
@@ -319,39 +331,36 @@ if STATS_ENABLED:
     except:
         pass
 
-# 헤더 영역 - 타이틀 축소
-col_title, col_kpi = st.columns([2, 3])
-with col_title:
-    st.markdown("""
-    <div style="padding: 1rem 0;">
-        <h1 style="margin-bottom: 0.3rem;">💬 현직자 런치톡 질문 수집</h1>
-        <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin: 0;">
-            함께 수강하는 분들의 질문을 모아서 현직자분께 전달하겠습니다
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+# 헤더 영역 - 타이틀
+st.markdown("""
+<div style="padding: 0.5rem 0 1rem 0;">
+    <h1 style="margin-bottom: 0.3rem;">💬 현직자 런치톡 질문 수집</h1>
+    <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin: 0;">
+        함께 수강하는 분들의 질문을 모아서 현직자분께 전달하겠습니다
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
-# KPI를 헤더 옆으로 이동
-with col_kpi:
-    all_questions = load_questions()
-    total_likes = sum(q.get("likes", 0) for q in all_questions)
-    current_visitors = 0
-    if STATS_ENABLED:
-        try:
-            from utils_stats import load_stats, get_current_visitors, get_daily_stats
-            stats = load_stats()
-            daily_stats = get_daily_stats(stats)
-            current_visitors = daily_stats.get('current_visitors', 0)
-        except:
-            pass
-    
-    kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-    with kpi_col1:
-        st.metric("총 질문", len(all_questions))
-    with kpi_col2:
-        st.metric("총 좋아요", total_likes)
-    with kpi_col3:
-        st.metric("현재 접속", f"{current_visitors}명")
+# KPI를 타이틀 아래로 배치 (명확한 레이블 포함)
+all_questions = load_questions()
+total_likes = sum(q.get("likes", 0) for q in all_questions)
+current_visitors = 0
+if STATS_ENABLED:
+    try:
+        from utils_stats import load_stats, get_current_visitors, get_daily_stats
+        stats = load_stats()
+        daily_stats = get_daily_stats(stats)
+        current_visitors = daily_stats.get('current_visitors', 0)
+    except:
+        pass
+
+kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+with kpi_col1:
+    st.metric("📊 총 질문 수", len(all_questions))
+with kpi_col2:
+    st.metric("👍 총 좋아요", total_likes)
+with kpi_col3:
+    st.metric("👥 현재 접속", f"{current_visitors}명")
 
 st.markdown("---")
 
