@@ -8,7 +8,7 @@ import json
 import os
 import pandas as pd
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 # 통계 모듈 임포트
@@ -476,8 +476,113 @@ if check_admin():
             elif filter_likes == "10개 이상":
                 filtered_questions = [q for q in filtered_questions if q.get("likes", 0) >= 10]
             
-            st.metric("총 질문 수", len(questions))
-            st.metric("필터링된 질문 수", len(filtered_questions))
+            col_metric1, col_metric2, col_metric3 = st.columns(3)
+            with col_metric1:
+                st.metric("총 질문 수", len(questions))
+            with col_metric2:
+                st.metric("필터링된 질문 수", len(filtered_questions))
+            with col_metric3:
+                total_likes_admin = sum(q.get("likes", 0) for q in questions)
+                st.metric("총 좋아요", total_likes_admin)
+            
+            st.markdown("---")
+            
+            # 일괄 삭제 옵션
+            with st.expander("🗑️ 일괄 삭제 옵션", expanded=False):
+                col_batch1, col_batch2 = st.columns(2)
+                
+                with col_batch1:
+                    st.markdown("**좋아요 기준 일괄 삭제**")
+                    batch_delete_likes = st.number_input(
+                        "좋아요가 이 값 이하인 질문 삭제",
+                        min_value=0,
+                        value=0,
+                        key="batch_delete_likes",
+                        help="예: 0을 입력하면 좋아요가 0개인 질문만 삭제"
+                    )
+                    if st.button("일괄 삭제 실행", key="batch_delete_by_likes", type="secondary"):
+                        if st.session_state.get("confirm_batch_delete_likes", False):
+                            deleted_count = 0
+                            remaining_questions = []
+                            for q in questions:
+                                if q.get("likes", 0) <= batch_delete_likes:
+                                    deleted_count += 1
+                                else:
+                                    remaining_questions.append(q)
+                            
+                            # ID 재정렬
+                            for idx, q in enumerate(remaining_questions, 1):
+                                q['id'] = idx
+                            
+                            save_questions(remaining_questions)
+                            st.success(f"✅ 좋아요 {batch_delete_likes}개 이하인 질문 {deleted_count}개가 삭제되었습니다")
+                            st.session_state.confirm_batch_delete_likes = False
+                            st.rerun()
+                        else:
+                            count = sum(1 for q in questions if q.get("likes", 0) <= batch_delete_likes)
+                            if count > 0:
+                                st.session_state.confirm_batch_delete_likes = True
+                                st.warning(f"⚠️ 좋아요 {batch_delete_likes}개 이하인 질문 {count}개가 삭제됩니다. 다시 클릭하면 삭제됩니다.")
+                            else:
+                                st.info("해당 조건에 맞는 질문이 없습니다.")
+                    
+                    if st.session_state.get("confirm_batch_delete_likes", False):
+                        if st.button("취소", key="cancel_batch_delete_likes"):
+                            st.session_state.confirm_batch_delete_likes = False
+                            st.rerun()
+                
+                with col_batch2:
+                    st.markdown("**날짜 기준 일괄 삭제**")
+                    batch_delete_days = st.number_input(
+                        "몇 일 이전 질문 삭제",
+                        min_value=1,
+                        value=7,
+                        key="batch_delete_days",
+                        help="예: 7을 입력하면 7일 이전 질문이 삭제"
+                    )
+                    if st.button("일괄 삭제 실행", key="batch_delete_by_date", type="secondary"):
+                        if st.session_state.get("confirm_batch_delete_date", False):
+                            cutoff_date = datetime.now() - timedelta(days=batch_delete_days)
+                            deleted_count = 0
+                            remaining_questions = []
+                            for q in questions:
+                                try:
+                                    q_date = datetime.strptime(q.get("timestamp", ""), "%Y-%m-%d %H:%M:%S")
+                                    if q_date < cutoff_date:
+                                        deleted_count += 1
+                                    else:
+                                        remaining_questions.append(q)
+                                except:
+                                    remaining_questions.append(q)
+                            
+                            # ID 재정렬
+                            for idx, q in enumerate(remaining_questions, 1):
+                                q['id'] = idx
+                            
+                            save_questions(remaining_questions)
+                            st.success(f"✅ {batch_delete_days}일 이전 질문 {deleted_count}개가 삭제되었습니다")
+                            st.session_state.confirm_batch_delete_date = False
+                            st.rerun()
+                        else:
+                            cutoff_date = datetime.now() - timedelta(days=batch_delete_days)
+                            count = 0
+                            for q in questions:
+                                try:
+                                    q_date = datetime.strptime(q.get("timestamp", ""), "%Y-%m-%d %H:%M:%S")
+                                    if q_date < cutoff_date:
+                                        count += 1
+                                except:
+                                    pass
+                            if count > 0:
+                                st.session_state.confirm_batch_delete_date = True
+                                st.warning(f"⚠️ {batch_delete_days}일 이전 질문 {count}개가 삭제됩니다. 다시 클릭하면 삭제됩니다.")
+                            else:
+                                st.info("해당 조건에 맞는 질문이 없습니다.")
+                    
+                    if st.session_state.get("confirm_batch_delete_date", False):
+                        if st.button("취소", key="cancel_batch_delete_date"):
+                            st.session_state.confirm_batch_delete_date = False
+                            st.rerun()
             
             st.markdown("---")
             
@@ -778,6 +883,167 @@ if check_admin():
         questions_count = len(load_questions())
         st.markdown("---")
         st.metric("현재 저장된 질문 수", f"{questions_count}개")
+        
+        st.markdown("---")
+        
+        st.subheader("🗑️ 질문 관리 기능")
+        
+        # 질문 일괄 삭제 옵션
+        col_del1, col_del2 = st.columns(2)
+        
+        with col_del1:
+            st.markdown("**좋아요가 적은 질문 삭제**")
+            delete_likes_threshold = st.number_input(
+                "좋아요가 이 값 이하인 질문 삭제",
+                min_value=0,
+                value=0,
+                key="delete_likes_threshold",
+                help="예: 0을 입력하면 좋아요가 0개인 질문만 삭제됩니다"
+            )
+            if st.button("좋아요 기준으로 삭제", key="delete_by_likes", type="secondary"):
+                if st.session_state.get("confirm_delete_by_likes", False):
+                    questions = load_questions()
+                    deleted_count = 0
+                    remaining_questions = []
+                    for q in questions:
+                        if q.get("likes", 0) <= delete_likes_threshold:
+                            deleted_count += 1
+                        else:
+                            remaining_questions.append(q)
+                    
+                    # ID 재정렬
+                    for idx, q in enumerate(remaining_questions, 1):
+                        q['id'] = idx
+                    
+                    save_questions(remaining_questions)
+                    st.success(f"✅ 좋아요 {delete_likes_threshold}개 이하인 질문 {deleted_count}개가 삭제되었습니다")
+                    st.session_state.confirm_delete_by_likes = False
+                    st.rerun()
+                else:
+                    questions = load_questions()
+                    count = sum(1 for q in questions if q.get("likes", 0) <= delete_likes_threshold)
+                    if count > 0:
+                        st.session_state.confirm_delete_by_likes = True
+                        st.warning(f"⚠️ 좋아요 {delete_likes_threshold}개 이하인 질문 {count}개가 삭제됩니다. 다시 클릭하면 삭제됩니다.")
+                    else:
+                        st.info("해당 조건에 맞는 질문이 없습니다.")
+            
+            if st.session_state.get("confirm_delete_by_likes", False):
+                if st.button("취소", key="cancel_delete_by_likes"):
+                    st.session_state.confirm_delete_by_likes = False
+                    st.rerun()
+        
+        with col_del2:
+            st.markdown("**오래된 질문 삭제**")
+            delete_days = st.number_input(
+                "몇 일 이전 질문 삭제",
+                min_value=1,
+                value=7,
+                key="delete_days",
+                help="예: 7을 입력하면 7일 이전 질문이 삭제됩니다"
+            )
+            if st.button("날짜 기준으로 삭제", key="delete_by_date", type="secondary"):
+                if st.session_state.get("confirm_delete_by_date", False):
+                    questions = load_questions()
+                    from datetime import timedelta
+                    cutoff_date = datetime.now() - timedelta(days=delete_days)
+                    deleted_count = 0
+                    remaining_questions = []
+                    for q in questions:
+                        try:
+                            q_date = datetime.strptime(q.get("timestamp", ""), "%Y-%m-%d %H:%M:%S")
+                            if q_date < cutoff_date:
+                                deleted_count += 1
+                            else:
+                                remaining_questions.append(q)
+                        except:
+                            remaining_questions.append(q)
+                    
+                    # ID 재정렬
+                    for idx, q in enumerate(remaining_questions, 1):
+                        q['id'] = idx
+                    
+                    save_questions(remaining_questions)
+                    st.success(f"✅ {delete_days}일 이전 질문 {deleted_count}개가 삭제되었습니다")
+                    st.session_state.confirm_delete_by_date = False
+                    st.rerun()
+                else:
+                    questions = load_questions()
+                    from datetime import timedelta
+                    cutoff_date = datetime.now() - timedelta(days=delete_days)
+                    count = 0
+                    for q in questions:
+                        try:
+                            q_date = datetime.strptime(q.get("timestamp", ""), "%Y-%m-%d %H:%M:%S")
+                            if q_date < cutoff_date:
+                                count += 1
+                        except:
+                            pass
+                    if count > 0:
+                        st.session_state.confirm_delete_by_date = True
+                        st.warning(f"⚠️ {delete_days}일 이전 질문 {count}개가 삭제됩니다. 다시 클릭하면 삭제됩니다.")
+                    else:
+                        st.info("해당 조건에 맞는 질문이 없습니다.")
+            
+            if st.session_state.get("confirm_delete_by_date", False):
+                if st.button("취소", key="cancel_delete_by_date"):
+                    st.session_state.confirm_delete_by_date = False
+                    st.rerun()
+        
+        st.markdown("---")
+        
+        st.subheader("📊 통계 초기화")
+        
+        col_stats1, col_stats2 = st.columns(2)
+        
+        with col_stats1:
+            st.markdown("**조회수 초기화**")
+            st.caption("방문자 통계 데이터를 모두 삭제합니다")
+            if st.button("조회수 초기화", key="reset_stats", type="secondary"):
+                if st.session_state.get("confirm_reset_stats", False):
+                    try:
+                        from utils_stats import load_stats, save_stats
+                        stats = []
+                        save_stats(stats)
+                        st.success("✅ 조회수 통계가 초기화되었습니다")
+                        st.session_state.confirm_reset_stats = False
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"오류: {e}")
+                else:
+                    st.session_state.confirm_reset_stats = True
+                    st.warning("⚠️ 조회수 통계가 모두 삭제됩니다. 다시 클릭하면 초기화됩니다.")
+            
+            if st.session_state.get("confirm_reset_stats", False):
+                if st.button("취소", key="cancel_reset_stats"):
+                    st.session_state.confirm_reset_stats = False
+                    st.rerun()
+        
+        with col_stats2:
+            st.markdown("**좋아요 초기화**")
+            st.caption("모든 질문의 좋아요 수를 0으로 초기화합니다")
+            if st.button("좋아요 초기화", key="reset_likes", type="secondary"):
+                if st.session_state.get("confirm_reset_likes", False):
+                    questions = load_questions()
+                    for q in questions:
+                        q['likes'] = 0
+                    save_questions(questions)
+                    st.success("✅ 모든 질문의 좋아요가 초기화되었습니다")
+                    st.session_state.confirm_reset_likes = False
+                    st.rerun()
+                else:
+                    questions = load_questions()
+                    total_likes = sum(q.get("likes", 0) for q in questions)
+                    if total_likes > 0:
+                        st.session_state.confirm_reset_likes = True
+                        st.warning(f"⚠️ 총 {total_likes}개의 좋아요가 모두 0으로 초기화됩니다. 다시 클릭하면 초기화됩니다.")
+                    else:
+                        st.info("초기화할 좋아요가 없습니다.")
+            
+            if st.session_state.get("confirm_reset_likes", False):
+                if st.button("취소", key="cancel_reset_likes"):
+                    st.session_state.confirm_reset_likes = False
+                    st.rerun()
         
         st.markdown("---")
         
