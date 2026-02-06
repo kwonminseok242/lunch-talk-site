@@ -331,17 +331,19 @@ if STATS_ENABLED:
     except:
         pass
 
-# 헤더 영역 - 타이틀
+# 헤더 영역 - 타이틀 박스
 st.markdown("""
-<div style="padding: 0.5rem 0 1rem 0;">
-    <h1 style="margin-bottom: 0.3rem;">💬 현직자 런치톡 질문 수집</h1>
+<div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 1rem;">
+    <h1 style="margin-bottom: 0.5rem;">💬 현직자 런치톡 질문 수집</h1>
     <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin: 0;">
         함께 수강하는 분들의 질문을 모아서 현직자분께 전달하겠습니다
     </p>
 </div>
 """, unsafe_allow_html=True)
 
-# KPI를 타이틀 아래로 배치 (명확한 레이블 포함)
+# KPI 박스 - 별도 구역
 all_questions = load_questions()
 total_likes = sum(q.get("likes", 0) for q in all_questions)
 current_visitors = 0
@@ -354,13 +356,27 @@ if STATS_ENABLED:
     except:
         pass
 
-kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
-with kpi_col1:
-    st.metric("📊 총 질문 수", len(all_questions))
-with kpi_col2:
-    st.metric("👍 총 좋아요", total_likes)
-with kpi_col3:
-    st.metric("👥 현재 접속", f"{current_visitors}명")
+# KPI를 박스 안에 배치
+st.markdown(f"""
+<div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12);
+            margin-bottom: 1.5rem;">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; text-align: center;">
+        <div>
+            <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 0.5rem;">📊 총 질문 수</div>
+            <div style="color: #ffffff; font-size: 2rem; font-weight: 700;">{len(all_questions)}</div>
+        </div>
+        <div>
+            <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 0.5rem;">👍 총 좋아요</div>
+            <div style="color: #ffffff; font-size: 2rem; font-weight: 700;">{total_likes}</div>
+        </div>
+        <div>
+            <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 0.5rem;">👥 현재 접속</div>
+            <div style="color: #ffffff; font-size: 2rem; font-weight: 700;">{current_visitors}명</div>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 st.markdown("---")
 
