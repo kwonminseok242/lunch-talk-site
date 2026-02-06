@@ -10,6 +10,14 @@ import pandas as pd
 from datetime import datetime
 from pathlib import Path
 
+# 페이지 설정 (최상단)
+st.set_page_config(
+    page_title="현직자 런치톡 질문 수집",
+    page_icon="💬",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 # 통계 추적 모듈
 try:
     from utils_stats import track_visit, get_daily_stats, get_all_time_stats
@@ -28,14 +36,6 @@ except ImportError:
     except ImportError:
         USE_GSHEETS = False
 
-# 페이지 설정
-st.set_page_config(
-    page_title="현직자 런치톡 질문 수집",
-    page_icon="💬",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 # 세션 상태 초기화
 if 'search_query' not in st.session_state:
     st.session_state.search_query = ""
@@ -43,11 +43,12 @@ if 'sort_option' not in st.session_state:
     st.session_state.sort_option = "👍 좋아요 순"
 if 'liked_questions' not in st.session_state:
     st.session_state.liked_questions = set()
+if 'new_question_id' not in st.session_state:
+    st.session_state.new_question_id = None
 
 # 우리은행 블루 컬러
 WOORI_BLUE = "#004C97"
 WOORI_LIGHT_BLUE = "#0066CC"
-WOORI_WHITE = "#FFFFFF"
 
 # 데이터 파일 경로
 DATA_FILE = "questions.json"
@@ -115,8 +116,9 @@ def save_questions(questions):
 def add_question(name, question):
     """새 질문 추가"""
     questions = load_questions()
+    new_id = len(questions) + 1
     new_question = {
-        "id": len(questions) + 1,
+        "id": new_id,
         "name": name,
         "question": question,
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -124,13 +126,12 @@ def add_question(name, question):
     }
     questions.append(new_question)
     save_questions(questions)
-    return questions
+    st.session_state.new_question_id = new_id
+    return new_id
 
 def like_question(question_id):
     """질문 좋아요 (중복 방지)"""
-    # 이미 좋아요를 누른 질문인지 확인
     if question_id in st.session_state.liked_questions:
-        st.warning("이미 좋아요를 누른 질문입니다")
         return
     
     questions = load_questions()
@@ -140,175 +141,139 @@ def like_question(question_id):
             st.session_state.liked_questions.add(question_id)
             break
     save_questions(questions)
-    st.success("👍 좋아요가 반영되었습니다!")
     st.rerun()
 
-# 커스텀 CSS - 어두운 계열 모던 Glass 디자인
+# 커스텀 CSS - 정리된 모던 디자인
 st.markdown(f"""
 <style>
-    /* 전체 배경 - 어두운 그라데이션 */
+    /* 전체 배경 */
     .main {{
         background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
         min-height: 100vh;
     }}
     
-    /* 스트림릿 컨테이너 - 투명하게 */
+    /* 컨테이너 여백 줄이기 */
     .block-container {{
         background: transparent;
-        padding: 2rem;
-        margin-top: 1rem;
+        padding: 1rem 2rem;
+        margin-top: 0.5rem;
     }}
     
-    /* 버튼 - 모던 글래스 효과 */
+    /* 타이틀 스타일 - 크기 축소 */
+    h1 {{
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.8rem;
+        letter-spacing: -0.5px;
+        margin-bottom: 0.5rem;
+    }}
+    
+    h2 {{
+        color: #ffffff;
+        font-weight: 600;
+        font-size: 1.3rem;
+        margin-bottom: 0.5rem;
+    }}
+    
+    h3 {{
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+        font-size: 1.1rem;
+    }}
+    
+    /* 버튼 - 통일된 스타일 */
     .stButton>button {{
-        background: rgba(0, 76, 151, 0.9);
+        background: {WOORI_BLUE};
         color: white;
         border-radius: 12px;
-        padding: 0.75rem 2rem;
+        padding: 0.6rem 1.5rem;
         font-weight: 600;
-        font-size: 1rem;
+        font-size: 0.95rem;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        box-shadow: 0 8px 32px rgba(0, 76, 151, 0.4),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-        text-transform: none;
+        transition: all 0.2s ease;
     }}
     
     .stButton>button:hover {{
         background: {WOORI_LIGHT_BLUE};
-        transform: translateY(-2px);
-        box-shadow: 0 12px 40px rgba(0, 102, 204, 0.5),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
     }}
     
-    .stButton>button:active {{
-        transform: translateY(0);
+    /* 입력 필드 - 통일된 라운딩 */
+    .stTextInput>div>div>input,
+    .stTextArea>div>div>textarea,
+    .stSelectbox>div>div>select {{
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 12px;
+        color: #ffffff;
+        padding: 0.6rem 1rem;
+        font-size: 0.95rem;
     }}
     
-    /* 질문 카드 - 진짜 글래스 효과 */
+    .stTextInput>div>div>input:focus,
+    .stTextArea>div>div>textarea:focus {{
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid {WOORI_LIGHT_BLUE};
+        outline: none;
+    }}
+    
+    .stTextInput>div>div>input::placeholder,
+    .stTextArea>div>div>textarea::placeholder {{
+        color: rgba(255, 255, 255, 0.4);
+    }}
+    
+    /* 질문 카드 - 간소화 */
     .question-card {{
         background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(40px);
-        -webkit-backdrop-filter: blur(40px);
-        padding: 2rem;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        margin-bottom: 1.5rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-        position: relative;
-    }}
-    
-    .question-card::before {{
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 3px;
-        background: linear-gradient(90deg, {WOORI_BLUE}, {WOORI_LIGHT_BLUE});
-        border-radius: 16px 16px 0 0;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        margin-bottom: 1rem;
+        transition: all 0.2s ease;
     }}
     
     .question-card:hover {{
-        transform: translateY(-2px);
-        background: rgba(255, 255, 255, 0.12);
-        box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.18);
+    }}
+    
+    .question-card.new-question {{
+        border: 2px solid {WOORI_LIGHT_BLUE};
+        animation: highlight 2s ease;
+    }}
+    
+    @keyframes highlight {{
+        0% {{ border-color: {WOORI_LIGHT_BLUE}; }}
+        100% {{ border-color: rgba(255, 255, 255, 0.12); }}
     }}
     
     .question-header {{
         color: #ffffff;
-        font-weight: 700;
-        font-size: 1.2rem;
-        margin-bottom: 1rem;
-        letter-spacing: -0.3px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.8rem;
     }}
     
     .question-text {{
         color: rgba(255, 255, 255, 0.9);
-        font-size: 1.05rem;
-        line-height: 1.8;
-        margin-bottom: 1rem;
+        font-size: 1rem;
+        line-height: 1.7;
+        margin-bottom: 0.8rem;
         white-space: pre-wrap;
         word-wrap: break-word;
     }}
     
     .question-meta {{
         color: rgba(255, 255, 255, 0.6);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
         display: flex;
         justify-content: space-between;
-        align-items: center;
-        padding-top: 1rem;
+        padding-top: 0.8rem;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }}
-    
-    /* 타이틀 스타일 */
-    h1 {{
-        color: #ffffff;
-        text-align: center;
-        padding-bottom: 1.5rem;
-        font-weight: 700;
-        font-size: 2.5rem;
-        letter-spacing: -1px;
-    }}
-    
-    h2 {{
-        color: #ffffff;
-        font-weight: 600;
-    }}
-    
-    /* 입력 필드 - 글래스 효과 */
-    .stTextInput>div>div>input {{
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 10px;
-        color: #ffffff;
-        padding: 0.75rem 1rem;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }}
-    
-    .stTextInput>div>div>input:focus {{
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid {WOORI_LIGHT_BLUE};
-        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
-        outline: none;
-    }}
-    
-    .stTextInput>div>div>input::placeholder {{
-        color: rgba(255, 255, 255, 0.4);
-    }}
-    
-    .stTextArea>div>div>textarea {{
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 10px;
-        color: #ffffff;
-        padding: 1rem;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }}
-    
-    .stTextArea>div>div>textarea:focus {{
-        background: rgba(255, 255, 255, 0.15);
-        border: 1px solid {WOORI_LIGHT_BLUE};
-        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.2);
-        outline: none;
-    }}
-    
-    .stTextArea>div>div>textarea::placeholder {{
-        color: rgba(255, 255, 255, 0.4);
     }}
     
     /* 사이드바 스타일 */
@@ -316,32 +281,6 @@ st.markdown(f"""
         background: rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border-right: 1px solid rgba(255, 255, 255, 0.1);
-    }}
-    
-    /* 체크박스 스타일 */
-    .stCheckbox label {{
-        color: rgba(255, 255, 255, 0.9);
-        font-weight: 500;
-    }}
-    
-    /* 라디오 버튼 스타일 */
-    .stRadio label {{
-        color: rgba(255, 255, 255, 0.9);
-    }}
-    
-    /* 셀렉트박스 스타일 */
-    .stSelectbox label {{
-        color: rgba(255, 255, 255, 0.9);
-    }}
-    
-    .stSelectbox>div>div>select {{
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        border-radius: 10px;
-        color: #ffffff;
     }}
     
     /* 메트릭 스타일 */
@@ -354,59 +293,21 @@ st.markdown(f"""
         color: rgba(255, 255, 255, 0.7);
     }}
     
-    /* 캡션 스타일 */
-    .stCaption {{
-        color: rgba(255, 255, 255, 0.6);
-    }}
-    
-    /* Info/Warning/Success 박스 스타일 */
-    .stAlert {{
-        background: rgba(255, 255, 255, 0.1);
+    /* 빈 상태 카드 - 작게 */
+    .empty-state {{
+        background: rgba(255, 255, 255, 0.06);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 2rem;
         border-radius: 12px;
-    }}
-    
-    /* Expander 스타일 */
-    .streamlit-expanderHeader {{
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border-radius: 12px;
-        color: rgba(255, 255, 255, 0.9);
         border: 1px solid rgba(255, 255, 255, 0.1);
+        text-align: center;
     }}
     
-    /* 스크롤바 스타일 */
-    ::-webkit-scrollbar {{
-        width: 10px;
-    }}
-    
-    ::-webkit-scrollbar-track {{
-        background: rgba(0, 0, 0, 0.2);
-        border-radius: 10px;
-    }}
-    
-    ::-webkit-scrollbar-thumb {{
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 10px;
-    }}
-    
-    ::-webkit-scrollbar-thumb:hover {{
-        background: rgba(255, 255, 255, 0.3);
-    }}
-    
-    /* 글래스 카드 컨테이너 */
-    .glass-card {{
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(40px);
-        -webkit-backdrop-filter: blur(40px);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-        padding: 1.5rem;
+    /* 체크박스/라디오 스타일 */
+    .stCheckbox label,
+    .stRadio label {{
+        color: rgba(255, 255, 255, 0.9);
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -418,213 +319,172 @@ if STATS_ENABLED:
     except:
         pass
 
-# 메인 타이틀 - 모던 스타일
-st.markdown(f"""
-<div style="text-align: center; padding: 3rem 0 2rem 0;">
-    <h1 style="margin-bottom: 0.5rem; font-size: 3rem; font-weight: 700; letter-spacing: -2px; color: #ffffff;">
-        💬 현직자 런치톡 질문 수집
-    </h1>
-    <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.2rem; font-weight: 300; letter-spacing: 0.5px; margin-top: 1rem;">
-        함께 수강하는 분들의 질문을 모아서 현직자분께 전달하겠습니다
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-# 실시간 통계 표시
-if STATS_ENABLED:
-    try:
-        from utils_stats import load_stats, get_current_visitors, get_daily_stats
-        stats = load_stats()
-        daily_stats = get_daily_stats(stats)
-        current_visitors = daily_stats.get('current_visitors', 0)
-        
-        if current_visitors > 0:
-            st.markdown(f"""
-            <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); 
-                        padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; text-align: center; 
-                        border: 1px solid rgba(255, 255, 255, 0.15); 
-                        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);">
-                <strong style="color: #ffffff; font-size: 1.1rem; font-weight: 600;">
-                    👥 현재 접속 중: {current_visitors}명
-                </strong>
-            </div>
-            """, unsafe_allow_html=True)
-    except:
-        pass
-
-# 사이드바 - 질문 작성 및 필터
-with st.sidebar:
-    st.markdown(f"""
-    <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                padding: 2rem; border-radius: 16px; margin-bottom: 2rem;
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);">
-        <h2 style="color: #ffffff; margin: 0; text-align: center; font-weight: 700; font-size: 1.5rem;">
-            📝 질문 작성
-        </h2>
+# 헤더 영역 - 타이틀 축소
+col_title, col_kpi = st.columns([2, 3])
+with col_title:
+    st.markdown("""
+    <div style="padding: 1rem 0;">
+        <h1 style="margin-bottom: 0.3rem;">💬 현직자 런치톡 질문 수집</h1>
+        <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin: 0;">
+            함께 수강하는 분들의 질문을 모아서 현직자분께 전달하겠습니다
+        </p>
     </div>
     """, unsafe_allow_html=True)
+
+# KPI를 헤더 옆으로 이동
+with col_kpi:
+    all_questions = load_questions()
+    total_likes = sum(q.get("likes", 0) for q in all_questions)
+    current_visitors = 0
+    if STATS_ENABLED:
+        try:
+            from utils_stats import load_stats, get_current_visitors, get_daily_stats
+            stats = load_stats()
+            daily_stats = get_daily_stats(stats)
+            current_visitors = daily_stats.get('current_visitors', 0)
+        except:
+            pass
     
-    # 익명 옵션 (기본값: 익명)
-    use_name = st.checkbox("이름을 표시하시겠어요?", value=False, help="체크 해제 시 '익명'으로 표시됩니다")
+    kpi_col1, kpi_col2, kpi_col3 = st.columns(3)
+    with kpi_col1:
+        st.metric("총 질문", len(all_questions))
+    with kpi_col2:
+        st.metric("총 좋아요", total_likes)
+    with kpi_col3:
+        st.metric("현재 접속", f"{current_visitors}명")
+
+st.markdown("---")
+
+# 본문을 2열로 분리: 좌측 폼, 우측 목록
+col_form, col_list = st.columns([1, 1.5])
+
+# 좌측: 질문 작성 폼
+with col_form:
+    st.markdown("### 📝 질문 작성")
     
-    if use_name:
-        name = st.text_input("이름", placeholder="예: 홍길동", help="이름을 입력하지 않으면 익명으로 표시됩니다", max_chars=20, key="input_name")
-    else:
-        name = ""
-        st.markdown('<p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-top: -0.5rem;">ℹ️ 익명으로 질문이 등록됩니다</p>', unsafe_allow_html=True)
-    
-    question = st.text_area(
-        "질문 내용 *",
-        placeholder="현직자분께 궁금한 점을 작성해주세요...",
-        height=150,
-        help="질문 내용은 필수 입력 항목입니다 (최대 1000자)",
-        max_chars=1000,
-        key="input_question"
-    )
-    
-    # 글자 수 표시
-    if question:
-        char_count = len(question)
-        if char_count > 900:
-            st.markdown(f'<p style="color: #ffc107; font-size: 0.85rem; margin-top: -0.5rem;">⚠️ {char_count}/1000자 (거의 다 채웠습니다)</p>', unsafe_allow_html=True)
-        elif char_count > 0:
-            st.markdown(f'<p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; margin-top: -0.5rem;">📝 {char_count}/1000자</p>', unsafe_allow_html=True)
-    
-    # 질문 등록 버튼
-    if st.button("✅ 질문 등록하기", use_container_width=True, type="primary"):
-        if question.strip():
-            # 질문 길이 제한
-            if len(question.strip()) > 1000:
-                st.error("⚠️ 질문은 1000자 이하로 작성해주세요.")
+    with st.form("question_form", clear_on_submit=True):
+        use_name = st.checkbox("이름을 표시하시겠어요?", value=False)
+        
+        if use_name:
+            name = st.text_input("이름", placeholder="예: 홍길동", max_chars=20)
+        else:
+            name = ""
+            st.caption("ℹ️ 익명으로 질문이 등록됩니다")
+        
+        question = st.text_area(
+            "질문 내용 *",
+            placeholder="현직자분께 궁금한 점을 작성해주세요...\n\n예시:\n- 실무에서 가장 중요하게 생각하는 스킬은 무엇인가요?\n- 커리어 전환 시 고려해야 할 점은 무엇인가요?",
+            height=200,
+            max_chars=1000,
+            help="질문 내용은 필수 입력 항목입니다 (최대 1000자)"
+        )
+        
+        # 글자 수 표시
+        if question:
+            char_count = len(question)
+            if char_count > 900:
+                st.caption(f"⚠️ {char_count}/1000자 (거의 다 채웠습니다)")
+            elif char_count > 0:
+                st.caption(f"📝 {char_count}/1000자")
+        
+        submitted = st.form_submit_button("✅ 질문 등록하기", use_container_width=True, type="primary")
+        
+        if submitted:
+            if question.strip():
+                if len(question.strip()) > 1000:
+                    st.error("⚠️ 질문은 1000자 이하로 작성해주세요.")
+                else:
+                    display_name = name.strip() if (use_name and name.strip()) else "익명"
+                    new_id = add_question(display_name, question.strip())
+                    st.success("✅ 질문이 등록되었습니다!")
+                    st.rerun()
             else:
-                display_name = name.strip() if (use_name and name.strip()) else "익명"
-                add_question(display_name, question.strip())
-                st.success("✅ 질문이 등록되었습니다!")
-                st.balloons()
+                st.error("⚠️ 질문 내용을 입력해주세요.")
+
+# 우측: 질문 목록
+with col_list:
+    st.markdown("### 📋 등록된 질문 목록")
+    
+    # 검색 및 정렬 (통일된 스타일)
+    search_col, sort_col = st.columns([2, 1])
+    with search_col:
+        search_input = st.text_input(
+            "🔎 검색",
+            placeholder="키워드로 검색...",
+            key="search_main",
+            value=st.session_state.search_query,
+            label_visibility="collapsed"
+        )
+        if search_input != st.session_state.search_query:
+            st.session_state.search_query = search_input
+    
+    with sort_col:
+        sort_index = ["👍 좋아요 순", "🕒 최신순", "📝 작성자순"].index(st.session_state.sort_option)
+        sort_select = st.selectbox(
+            "정렬",
+            ["👍 좋아요 순", "🕒 최신순", "📝 작성자순"],
+            key="sort_main",
+            label_visibility="collapsed",
+            index=sort_index
+        )
+        if sort_select != st.session_state.sort_option:
+            st.session_state.sort_option = sort_select
+    
+    # 질문 필터링 및 정렬
+    questions = load_questions()
+    if st.session_state.search_query:
+        questions = [q for q in questions if st.session_state.search_query.lower() in q["question"].lower()]
+    
+    if st.session_state.sort_option == "👍 좋아요 순":
+        questions_sorted = sorted(questions, key=lambda x: x.get("likes", 0), reverse=True)
+    elif st.session_state.sort_option == "🕒 최신순":
+        questions_sorted = sorted(questions, key=lambda x: x.get("timestamp", ""), reverse=True)
+    elif st.session_state.sort_option == "📝 작성자순":
+        questions_sorted = sorted(questions, key=lambda x: x.get("name", "익명"))
+    else:
+        questions_sorted = sorted(questions, key=lambda x: x.get("likes", 0), reverse=True)
+    
+    # 질문 목록 표시
+    if not questions:
+        if st.session_state.search_query:
+            st.warning(f"🔍 '{st.session_state.search_query}'에 대한 검색 결과가 없습니다.")
+            if st.button("🔍 검색 초기화", use_container_width=True):
+                st.session_state.search_query = ""
                 st.rerun()
         else:
-            st.error("⚠️ 질문 내용을 입력해주세요.")
-    
-    st.markdown("---")
-    
-    # 관리자 페이지 링크 (작게 표시)
-    with st.expander("🔐 관리자", expanded=False):
-        if st.button("관리자 페이지 접속", use_container_width=True, type="secondary"):
-            st.switch_page("pages/admin.py")
-    
-    st.markdown("---")
-    
-    # 필터 및 정렬 옵션
-    st.markdown("### 🔍 필터 및 정렬")
-    search_input_sidebar = st.text_input("🔎 질문 검색", placeholder="키워드로 검색...", help="질문 내용에서 검색합니다", key="search_sidebar", value=st.session_state.search_query)
-    if search_input_sidebar != st.session_state.search_query:
-        st.session_state.search_query = search_input_sidebar
-    
-    sort_index = ["👍 좋아요 순", "🕒 최신순", "📝 작성자순"].index(st.session_state.sort_option)
-    sort_input_sidebar = st.radio(
-        "정렬 기준",
-        ["👍 좋아요 순", "🕒 최신순", "📝 작성자순"],
-        help="질문 목록을 정렬하는 기준을 선택하세요",
-        key="sort_sidebar",
-        index=sort_index
-    )
-    if sort_input_sidebar != st.session_state.sort_option:
-        st.session_state.sort_option = sort_input_sidebar
-
-# 메인 영역 - 질문 목록
-questions = load_questions()
-
-# 검색 및 정렬을 메인 영역에도 추가
-col_title, col_search, col_sort = st.columns([2, 2, 2])
-with col_title:
-    st.markdown('<h2 style="color: #ffffff; font-weight: 700; margin-bottom: 0;">📋 등록된 질문 목록</h2>', unsafe_allow_html=True)
-with col_search:
-    # 메인 검색창 (사이드바와 동기화)
-    search_input_main = st.text_input("🔎 검색", placeholder="키워드로 검색...", key="search_main", label_visibility="collapsed", value=st.session_state.search_query)
-    if search_input_main != st.session_state.search_query:
-        st.session_state.search_query = search_input_main
-with col_sort:
-    # 메인 정렬 (사이드바와 동기화)
-    current_sort = st.session_state.sort_option
-    sort_index = ["👍 좋아요 순", "🕒 최신순", "📝 작성자순"].index(current_sort)
-    sort_select_main = st.selectbox(
-        "정렬",
-        ["👍 좋아요 순", "🕒 최신순", "📝 작성자순"],
-        key="sort_main",
-        label_visibility="collapsed",
-        index=sort_index
-    )
-    if sort_select_main != current_sort:
-        st.session_state.sort_option = sort_select_main
-
-# 검색 필터 적용
-if st.session_state.search_query:
-    questions = [q for q in questions if st.session_state.search_query.lower() in q["question"].lower()]
-
-# 정렬 옵션에 따라 정렬
-if st.session_state.sort_option == "👍 좋아요 순":
-    questions_sorted = sorted(questions, key=lambda x: x.get("likes", 0), reverse=True)
-elif st.session_state.sort_option == "🕒 최신순":
-    questions_sorted = sorted(questions, key=lambda x: x.get("timestamp", ""), reverse=True)
-elif st.session_state.sort_option == "📝 작성자순":
-    questions_sorted = sorted(questions, key=lambda x: x.get("name", "익명"))
-else:
-    questions_sorted = sorted(questions, key=lambda x: x.get("likes", 0), reverse=True)
-
-if not questions:
-    if st.session_state.search_query:
-        st.markdown(f"""
-        <div style="background: rgba(255, 193, 7, 0.1); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                    padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255, 193, 7, 0.2);
-                    margin-bottom: 1rem; text-align: center;">
-            <p style="color: #ffffff; font-size: 1.1rem; margin: 0;">
-                🔍 '{st.session_state.search_query}'에 대한 검색 결과가 없습니다.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button("🔍 검색 초기화", use_container_width=True):
-            st.session_state.search_query = ""
-            st.rerun()
+            # 빈 상태 UI 개선 (작고 명확하게)
+            st.markdown("""
+            <div class="empty-state">
+                <p style="color: rgba(255, 255, 255, 0.8); font-size: 1rem; margin-bottom: 1rem;">
+                    아직 등록된 질문이 없습니다
+                </p>
+                <p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; margin: 0;">
+                    왼쪽 폼에서 첫 번째 질문을 작성해보세요! 💡
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
     else:
-        st.markdown("""
-        <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                    padding: 2rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
-                    text-align: center; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);">
-            <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.2rem; margin: 0;">
-                아직 등록된 질문이 없습니다. 첫 번째 질문을 작성해보세요! 💡
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-else:
-    # 검색 결과 표시
-    if st.session_state.search_query:
-        st.markdown(f"""
-        <div style="background: rgba(0, 102, 204, 0.15); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                    padding: 1rem; border-radius: 12px; border: 1px solid rgba(0, 102, 204, 0.2);
-                    margin-bottom: 1rem; text-align: center;">
-            <p style="color: #ffffff; font-size: 1rem; margin: 0;">
-                🔍 '{st.session_state.search_query}' 검색 결과: {len(questions_sorted)}개
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # 질문 개수 표시
-    total_questions = len(load_questions())
-    if len(questions_sorted) != total_questions:
-        st.markdown(f'<p style="color: rgba(255, 255, 255, 0.5); font-size: 0.85rem; margin-top: -0.5rem;">전체 {total_questions}개 중 {len(questions_sorted)}개 표시</p>', unsafe_allow_html=True)
-    
-    for idx, q in enumerate(questions_sorted, 1):
-        with st.container():
-            # 질문 번호와 작성자 정보
+        # 검색 결과 표시
+        if st.session_state.search_query:
+            st.info(f"🔍 '{st.session_state.search_query}' 검색 결과: {len(questions_sorted)}개")
+        
+        # 질문 개수 표시
+        total_questions = len(load_questions())
+        if len(questions_sorted) != total_questions:
+            st.caption(f"전체 {total_questions}개 중 {len(questions_sorted)}개 표시")
+        
+        # 질문 카드 표시
+        for idx, q in enumerate(questions_sorted, 1):
             name_display = q.get("name", "익명")
             is_anonymous = name_display == "익명"
+            is_new = q['id'] == st.session_state.new_question_id
+            
+            card_class = "question-card new-question" if is_new else "question-card"
             
             st.markdown(f"""
-            <div class="question-card">
+            <div class="{card_class}">
                 <div class="question-header">
                     #{idx} {name_display}{'님' if not is_anonymous else ''}의 질문
-                    {'<span style="color: #999; font-size: 0.9rem;">(익명)</span>' if is_anonymous else ''}
                 </div>
                 <div class="question-text">
                     {q["question"]}
@@ -636,67 +496,50 @@ else:
             </div>
             """, unsafe_allow_html=True)
             
-            col1, col2, col3 = st.columns([2, 8, 2])
-            with col1:
-                # 좋아요 버튼 (이미 좋아요를 누른 경우 비활성화)
+            col_like, col_space, col_id = st.columns([3, 7, 2])
+            with col_like:
                 if q['id'] in st.session_state.liked_questions:
-                    st.button("✅ 좋아요 완료", key=f"like_{q['id']}", use_container_width=True, disabled=True, help="이미 좋아요를 누른 질문입니다")
+                    st.button("✅ 좋아요 완료", key=f"like_{q['id']}", use_container_width=True, disabled=True)
                 else:
                     if st.button("👍 좋아요", key=f"like_{q['id']}", use_container_width=True):
                         like_question(q["id"])
-            with col3:
-                st.markdown(f'<p style="color: rgba(255, 255, 255, 0.4); font-size: 0.85rem; text-align: right;">#{q["id"]}</p>', unsafe_allow_html=True)
+            with col_id:
+                st.caption(f"#{q['id']}")
             
             st.markdown("---")
+        
+        # 새 질문 하이라이트 초기화
+        if st.session_state.new_question_id:
+            st.session_state.new_question_id = None
 
-# 통계 정보 - 글래스 카드 스타일
-st.markdown("---")
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.markdown(f"""
-    <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); text-align: center;">
-        <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">총 질문 수</p>
-        <p style="color: #ffffff; font-size: 2rem; font-weight: 700; margin: 0;">{len(load_questions())}</p>
-    </div>
-    """, unsafe_allow_html=True)
-with col2:
-    all_questions = load_questions()
-    total_likes = sum(q.get("likes", 0) for q in all_questions)
-    st.markdown(f"""
-    <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); text-align: center;">
-        <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">총 좋아요</p>
-        <p style="color: #ffffff; font-size: 2rem; font-weight: 700; margin: 0;">{total_likes}</p>
-    </div>
-    """, unsafe_allow_html=True)
-with col3:
-    if all_questions:
-        avg_likes = total_likes / len(all_questions) if all_questions else 0
-        st.markdown(f"""
-        <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                    padding: 1.5rem; border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.15);
-                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); text-align: center;">
-            <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin-bottom: 0.5rem;">평균 좋아요</p>
-            <p style="color: #ffffff; font-size: 2rem; font-weight: 700; margin: 0;">{avg_likes:.1f}</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-# 푸터 - 글래스 스타일
-st.markdown("---")
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.markdown(f"""
-    <div style="background: rgba(255, 255, 255, 0.08); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
-                text-align: center; color: rgba(255, 255, 255, 0.7); padding: 2rem; border-radius: 16px;
-                border: 1px solid rgba(255, 255, 255, 0.15);
-                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); margin-top: 2rem;">
-        <p style="font-size: 1rem; margin-bottom: 0.5rem;">💡 질문은 실시간으로 업데이트됩니다</p>
-        <p style="font-size: 1rem; margin-bottom: 1rem;">🔄 페이지를 새로고침하면 최신 질문을 확인할 수 있습니다</p>
-        <p style="color: #ffffff; font-weight: 700; font-size: 1.2rem; margin-top: 1rem;">
-            우리은행 FISA 부트캠프 💙
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+# 사이드바 - 필터만
+with st.sidebar:
+    st.markdown("### 🔍 필터 및 정렬")
+    
+    search_sidebar = st.text_input(
+        "🔎 질문 검색",
+        placeholder="키워드로 검색...",
+        key="search_sidebar",
+        value=st.session_state.search_query
+    )
+    if search_sidebar != st.session_state.search_query:
+        st.session_state.search_query = search_sidebar
+    
+    st.markdown("---")
+    
+    sort_index = ["👍 좋아요 순", "🕒 최신순", "📝 작성자순"].index(st.session_state.sort_option)
+    sort_sidebar = st.radio(
+        "정렬 기준",
+        ["👍 좋아요 순", "🕒 최신순", "📝 작성자순"],
+        key="sort_sidebar",
+        index=sort_index
+    )
+    if sort_sidebar != st.session_state.sort_option:
+        st.session_state.sort_option = sort_sidebar
+    
+    st.markdown("---")
+    
+    # 관리자 페이지 링크
+    with st.expander("🔐 관리자", expanded=False):
+        if st.button("관리자 페이지 접속", use_container_width=True, type="secondary"):
+            st.switch_page("pages/admin.py")
