@@ -346,13 +346,13 @@ st.markdown("""
 # KPI 박스 - 별도 구역
 all_questions = load_questions()
 total_likes = sum(q.get("likes", 0) for q in all_questions)
-current_visitors = 0
+today_visits = 0
 if STATS_ENABLED:
     try:
-        from utils_stats import load_stats, get_current_visitors, get_daily_stats
+        from utils_stats import load_stats, get_daily_stats
         stats = load_stats()
         daily_stats = get_daily_stats(stats)
-        current_visitors = daily_stats.get('current_visitors', 0)
+        today_visits = daily_stats.get('total_visits', 0)  # 오늘 총 조회수
     except:
         pass
 
@@ -371,8 +371,8 @@ st.markdown(f"""
             <div style="color: #ffffff; font-size: 2rem; font-weight: 700;">{total_likes}</div>
         </div>
         <div>
-            <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 0.5rem;">👥 현재 접속</div>
-            <div style="color: #ffffff; font-size: 2rem; font-weight: 700;">{current_visitors}명</div>
+            <div style="color: rgba(255, 255, 255, 0.8); font-size: 0.9rem; margin-bottom: 0.5rem;">👁️ 오늘 조회수</div>
+            <div style="color: #ffffff; font-size: 2rem; font-weight: 700;">{today_visits}회</div>
         </div>
     </div>
 </div>
