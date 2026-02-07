@@ -57,6 +57,7 @@ def init_db():
 def save_to_sqlite(questions):
     """SQLite에 데이터 저장"""
     try:
+        questions = normalize_question_ids(list(questions))
         init_db()
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
@@ -126,6 +127,32 @@ def has_service_account(gsheets_config: dict) -> bool:
     required_keys = ["client_email", "private_key", "project_id"]
     return all(gsheets_config.get(key) for key in required_keys)
 
+def normalize_question_ids(questions):
+    """질문 id를 중복 없이 정리"""
+    if not questions:
+        return questions
+    seen = set()
+    max_id = 0
+    for q in questions:
+        try:
+            q_id = int(q.get("id", 0)) if q.get("id") is not None else 0
+        except Exception:
+            q_id = 0
+        if q_id > max_id:
+            max_id = q_id
+    next_id = max_id + 1
+    for q in questions:
+        try:
+            q_id = int(q.get("id", 0)) if q.get("id") is not None else 0
+        except Exception:
+            q_id = 0
+        if q_id <= 0 or q_id in seen:
+            q_id = next_id
+            next_id += 1
+        seen.add(q_id)
+        q["id"] = q_id
+    return questions
+
 def load_questions():
     """질문 데이터 로드 - Google Sheets 우선, 없으면 SQLite, 마지막으로 JSON"""
     # 1. Google Sheets 우선
@@ -162,6 +189,7 @@ def load_questions():
                         q['question'] = str(q['question'])
                         q['timestamp'] = str(q.get('timestamp', '')) if pd.notna(q.get('timestamp')) else ''
                         result.append(q)
+                result = normalize_question_ids(result)
                 if result:
                     save_to_sqlite(result)
                 return result
@@ -206,6 +234,7 @@ def load_questions():
 
 def save_questions(questions):
     """질문 데이터 저장 - Google Sheets 우선, SQLite 백업, JSON 마지막"""
+    questions = normalize_question_ids(list(questions))
     # 1. Google Sheets 저장 (우선)
     if USE_GSHEETS and conn_gsheet and questions:
         try:
