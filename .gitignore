@@ -14,9 +14,7 @@ questions.json
 questions.db
 stats.json
 
-# 미디어/자료 파일 (런치톡 기록)
-lunch_talk_record/*.m4a
-lunch_talk_record/*.pdf
+
 
 # IDE
 .vscode/
