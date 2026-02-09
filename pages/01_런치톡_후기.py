@@ -662,7 +662,40 @@ with tab_blog:
 
     if blog_text.strip():
         pretty_blog = format_blog_text(blog_text)
-        st.markdown(pretty_blog)
+
+        # 제목(첫 줄)과 나머지 본문을 분리해서 카드 형태로 렌더링
+        lines = pretty_blog.splitlines()
+        title = ""
+        body_lines = []
+        for line in lines:
+            if line.strip().startswith("## ") and not title:
+                title = line.strip().lstrip("#").strip()
+            else:
+                body_lines.append(line)
+        body_md = "\n".join(body_lines).strip()
+
+        # 메인 카드
+        st.markdown(
+            f"""
+<div class="section-card">
+  <h2 style="margin-top:0; margin-bottom:0.5rem;">📘 {title}</h2>
+  <p class="hero-sub" style="margin-bottom:1.2rem;">
+    런치톡에서 나왔던 금융 IT 취업 인사이트를 블로그 형식으로 정리한 글입니다.
+  </p>
+</div>
+""",
+            unsafe_allow_html=True,
+        )
+
+        # 본문은 약간 좁은 폭으로 중앙 정렬
+        st.markdown(
+            f"""
+<div style="max-width: 880px; margin: 0 auto 2rem auto; line-height: 1.7; font-size: 0.98rem;">
+{body_md}
+</div>
+""",
+            unsafe_allow_html=True,
+        )
     else:
         st.warning("`google_nootbook_blog.txt` 파일이 비어 있거나 내용을 찾을 수 없습니다. 파일에 내용을 채워두면 이 탭에서 자동으로 보여드립니다.")
 
