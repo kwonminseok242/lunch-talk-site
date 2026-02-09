@@ -548,7 +548,7 @@ st.markdown("""
             margin-bottom: 1rem;">
     <h1 style="margin-bottom: 0.5rem;">💬 현직자 런치톡 질문 수집</h1>
     <p style="color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; margin: 0;">
-        [질문 취합] 현직자 문의 사항을 남겨주세요. ※ 실명 질문을 우선 채택하겠습니다., 시간 제한으로 인해 모든 질문이 전달되지 않을 수 있습니다.
+        현직자에게 궁금한 내용을 남겨주세요.
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -777,4 +777,4 @@ with st.sidebar:
     # 관리자 페이지 링크
     with st.expander("🔐 관리자", expanded=False):
         if st.button("관리자 페이지 접속", use_container_width=True, type="secondary"):
-            st.switch_page("pages/admin.py")
+            st.switch_page("pages/02_관리자.py")
