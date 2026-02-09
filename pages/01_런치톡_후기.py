@@ -18,7 +18,7 @@ st.set_page_config(
 )
 
 # 상수 및 경로 설정
-PASSWORD = "20f0isa626"
+PASSWORD = "200fisa626"
 
 BASE_DIR = Path(__file__).parent.parent
 RECORD_DIR = BASE_DIR / "lunch_talk_record"
@@ -496,8 +496,7 @@ def password_gate():
                 <p class="password-desc">
                     우리 FISA 교육생만을 위한 비공개 런치톡 기록입니다.<br/>
                     아래에 비밀번호를 입력하면 내용을 확인할 수 있어요.<br/><br/>
-                    ⚠️ 이 페이지의 내용은 실제 런치톡 전체를 그대로 옮긴 것이 아니라,<br/>
-                    기억에 남는 핵심 내용과 인사이트만 정리한 요약본입니다.<br/>
+                    ⚠️ 이 페이지의 내용은 기억에 남는 핵심 내용과 인사이트만 정리한 요약본입니다.<br/>
                     모든 정보를 절대적인 사실로 받아들이기보다는,<br/>
                     취업 전략을 세울 때 참고용 인사이트로 활용해 주세요.
                 </p>
