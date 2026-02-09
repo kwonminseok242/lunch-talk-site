@@ -531,6 +531,11 @@ st.markdown(f"""
     .stRadio label {{
         color: rgba(255, 255, 255, 0.9);
     }}
+    
+    /* 기본 사이드바 네비게이션 숨김 */
+    [data-testid="stSidebarNav"] {{
+        display: none;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -622,7 +627,7 @@ with col_form:
             elif char_count > 0:
                 st.caption(f"📝 {char_count}/1000자")
         
-        submitted = st.form_submit_button("✅ 질문 등록하기", use_container_width=True, type="primary")
+        submitted = st.form_submit_button("✅ 질문 등록하기", width="stretch", type="primary")
         
         if submitted:
             if question.strip():
@@ -683,7 +688,7 @@ with col_list:
     if not questions:
         if st.session_state.search_query:
             st.warning(f"🔍 '{st.session_state.search_query}'에 대한 검색 결과가 없습니다.")
-            if st.button("🔍 검색 초기화", use_container_width=True):
+            if st.button("🔍 검색 초기화", width="stretch"):
                 st.session_state.search_query = ""
                 st.rerun()
         else:
@@ -734,9 +739,9 @@ with col_list:
             col_like, col_space, col_id = st.columns([3, 7, 2])
             with col_like:
                 if q['id'] in st.session_state.liked_questions:
-                    st.button("✅ 좋아요 완료", key=f"like_{q['id']}", use_container_width=True, disabled=True)
+                    st.button("✅ 좋아요 완료", key=f"like_{q['id']}", width="stretch", disabled=True)
                 else:
-                    if st.button("👍 좋아요", key=f"like_{q['id']}", use_container_width=True):
+                    if st.button("👍 좋아요", key=f"like_{q['id']}", width="stretch"):
                         like_question(q["id"])
             with col_id:
                 st.caption(f"#{q['id']}")
@@ -747,8 +752,14 @@ with col_list:
         if st.session_state.new_question_id:
             st.session_state.new_question_id = None
 
-# 사이드바 - 필터만
+# 사이드바 - 메뉴 + 필터
 with st.sidebar:
+    st.markdown("### 📌 메뉴")
+    st.page_link("app.py", label="질문 수집", icon="💬")
+    st.page_link("pages/01_런치톡_후기.py", label="런치톡 후기", icon="📝")
+    st.page_link("pages/02_관리자.py", label="관리자", icon="🔐")
+    
+    st.markdown("---")
     st.markdown("### 🔍 필터 및 정렬")
     
     search_sidebar = st.text_input(
@@ -771,10 +782,3 @@ with st.sidebar:
     )
     if sort_sidebar != st.session_state.sort_option:
         st.session_state.sort_option = sort_sidebar
-    
-    st.markdown("---")
-    
-    # 관리자 페이지 링크
-    with st.expander("🔐 관리자", expanded=False):
-        if st.button("관리자 페이지 접속", use_container_width=True, type="secondary"):
-            st.switch_page("pages/02_관리자.py")

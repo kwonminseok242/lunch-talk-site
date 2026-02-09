@@ -449,8 +449,20 @@ st.markdown(f"""
     .stSelectbox label {{
         color: rgba(255, 255, 255, 0.9);
     }}
+    
+    /* 기본 사이드바 네비게이션 숨김 */
+    [data-testid="stSidebarNav"] {{
+        display: none;
+    }}
 </style>
 """, unsafe_allow_html=True)
+
+# 사이드바 메뉴
+with st.sidebar:
+    st.markdown("### 📌 메뉴")
+    st.page_link("app.py", label="질문 수집", icon="💬")
+    st.page_link("pages/01_런치톡_후기.py", label="런치톡 후기", icon="📝")
+    st.page_link("pages/02_관리자.py", label="관리자", icon="🔐")
 
 # 관리자 비밀번호 (실제 사용 시 환경변수나 secrets로 관리)
 try:
@@ -476,7 +488,7 @@ def check_admin():
         
         col1, col2 = st.columns([1, 3])
         with col1:
-            if st.button("로그인", type="primary", use_container_width=True):
+            if st.button("로그인", type="primary", width="stretch"):
                 if password == ADMIN_PASSWORD:
                     st.session_state.admin_authenticated = True
                     st.rerun()
@@ -720,15 +732,15 @@ if check_admin():
                         if st.session_state.get(confirm_key, False):
                             col_yes, col_no = st.columns(2)
                             with col_yes:
-                                if st.button("✅ 확인", key=f"yes_{q['id']}", use_container_width=True):
+                                if st.button("✅ 확인", key=f"yes_{q['id']}", width="stretch"):
                                     delete_question(q['id'])
                                     st.session_state[confirm_key] = False
                             with col_no:
-                                if st.button("❌ 취소", key=f"no_{q['id']}", use_container_width=True):
+                                if st.button("❌ 취소", key=f"no_{q['id']}", width="stretch"):
                                     st.session_state[confirm_key] = False
                                     st.rerun()
                         else:
-                            if st.button("🗑️ 삭제", key=delete_key, type="secondary", use_container_width=True):
+                            if st.button("🗑️ 삭제", key=delete_key, type="secondary", width="stretch"):
                                 st.session_state[confirm_key] = True
                                 st.rerun()
                 
@@ -851,7 +863,7 @@ if check_admin():
                 for author, stats in author_stats.items()
             ]).sort_values("질문 수", ascending=False)
             
-            st.dataframe(author_df, use_container_width=True, hide_index=True)
+            st.dataframe(author_df, width="stretch", hide_index=True)
             
             st.markdown("---")
             
@@ -911,7 +923,7 @@ if check_admin():
                         data=csv_data,
                         file_name=f"questions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                         mime="text/csv",
-                        use_container_width=True
+                        width="stretch"
                     )
             
             with col2:
@@ -924,7 +936,7 @@ if check_admin():
                             data=excel_data,
                             file_name=f"questions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            use_container_width=True
+                            width="stretch"
                         )
                 except ImportError:
                     st.error("Excel 내보내기를 사용하려면 openpyxl 패키지가 필요합니다")
@@ -935,7 +947,7 @@ if check_admin():
             # 미리보기
             st.subheader("📋 데이터 미리보기")
             df = pd.DataFrame(questions)
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width="stretch", hide_index=True)
     
     # 탭 4: 설정
     with tab4:
@@ -1078,7 +1090,7 @@ worksheet = "questions"
             st.link_button(
                 "📋 Google Sheets 열기 (시크릿 모드에서 테스트)",
                 "https://docs.google.com/spreadsheets/d/1lEauHDkNImWHV-TpGbqGoBxYpC8dE0MY3SMMBBo1z0k/edit",
-                use_container_width=True
+                width="stretch"
             )
             st.info("💡 시크릿 모드에서 위 링크를 열었을 때 로그인 없이 바로 열리면 공개 설정이 완료된 것입니다.")
         except Exception as e:

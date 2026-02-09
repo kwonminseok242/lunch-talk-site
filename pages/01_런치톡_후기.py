@@ -464,10 +464,21 @@ st.markdown(
         color: rgba(255, 255, 255, 0.95);
         line-height: 1.7;
     }}
+    /* 기본 사이드바 네비게이션 숨김 */
+    [data-testid="stSidebarNav"] {{
+        display: none;
+    }}
 </style>
 """,
     unsafe_allow_html=True,
 )
+
+# 사이드바 메뉴
+with st.sidebar:
+    st.markdown("### 📌 메뉴")
+    st.page_link("app.py", label="질문 수집", icon="💬")
+    st.page_link("pages/01_런치톡_후기.py", label="런치톡 후기", icon="📝")
+    st.page_link("pages/02_관리자.py", label="관리자", icon="🔐")
 
 
 # 비밀번호 인증 상태
@@ -500,7 +511,7 @@ def password_gate():
     pwd = st.text_input("비밀번호를 입력하세요", type="password")
     col_empty_left, col_login, col_reset, col_empty_right = st.columns([2, 1, 1, 2])
     with col_login:
-        if st.button("입장하기", type="primary", use_container_width=True):
+        if st.button("입장하기", type="primary", width="stretch"):
             if pwd == PASSWORD:
                 st.session_state.lunch_talk_unlocked = True
                 st.success("✅ 인증이 완료되었습니다.")
@@ -508,7 +519,7 @@ def password_gate():
             else:
                 st.error("❌ 비밀번호가 올바르지 않습니다.")
     with col_reset:
-        if st.button("초기화", use_container_width=True):
+        if st.button("초기화", width="stretch"):
             st.session_state.lunch_talk_unlocked = False
             st.rerun()
 
