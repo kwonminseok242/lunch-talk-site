@@ -655,10 +655,6 @@ with tab_summary:
             render_qa_body(body)
             st.markdown("")  # 섹션 간 여백
 
-        # 추가 인사이트 섹션
-        st.markdown("---")
-        st.markdown(EXTRA_SUMMARY)
-
 
 with tab_blog:
     st.markdown("### 📰 블로그형 정리")
