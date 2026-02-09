@@ -195,7 +195,7 @@ def format_blog_text(raw: str) -> str:
     return "\n".join(markdown_parts)
 
 
-def pdf_to_html_embed(path: Path, height: int = 700) -> None:
+def pdf_to_html_embed(path: Path, height: int = 820) -> None:
     """
     PDF를 내장 iframe 뷰어로 임베드.
     - streamlit[pdf] 컴포넌트 없이도 동작하도록 st.pdf는 사용하지 않음
@@ -292,7 +292,7 @@ def pdf_to_html_embed(path: Path, height: int = 700) -> None:
             }});
         </script>
         """
-        components.html(html, height=height + 80)
+        components.html(html, height=height + 120)
     except Exception as e:
         st.error(f"PDF를 표시하는 중 오류가 발생했습니다: {e}")
 
@@ -594,14 +594,14 @@ with tab_intro:
     with col_p1:
         st.markdown("##### 🔐 송지현 계장님 프로필")
         if MENTOR_PDF_SONG.exists():
-            pdf_to_html_embed(MENTOR_PDF_SONG, height=420)
+            pdf_to_html_embed(MENTOR_PDF_SONG, height=560)
         else:
             st.info(f"`{MENTOR_PDF_SONG.name}` 파일을 찾을 수 없습니다.")
 
     with col_p2:
         st.markdown("##### ☁️ 김혁준 계장님 프로필")
         if MENTOR_PDF_KIM.exists():
-            pdf_to_html_embed(MENTOR_PDF_KIM, height=420)
+            pdf_to_html_embed(MENTOR_PDF_KIM, height=560)
         else:
             st.info(f"`{MENTOR_PDF_KIM.name}` 파일을 찾을 수 없습니다.")
 
@@ -714,6 +714,6 @@ with tab_audio:
 with tab_pdf:
     st.markdown("### 📑 현직 선배의 금융 IT 공략집 (PDF)")
     if PDF_FILE.exists():
-        pdf_to_html_embed(PDF_FILE, height=720)
+        pdf_to_html_embed(PDF_FILE, height=980)
     else:
         st.error(f"PDF 파일을 찾을 수 없습니다: {PDF_FILE.name}")
